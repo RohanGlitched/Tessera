@@ -14,11 +14,16 @@ web/.next
 web/out
 web/next-env.d.ts
 
-# Secrets. The faucet key that funds throwaway test wallets lives in
-# web/.env.local and must never be committed.
+# Secrets. The faucet key that hands out test tokens lives in web/.env.local and
+# must never be committed.
 .env
 .env.*
 !.env.example
+
+# The dedicated faucet keypair, written by scripts/split-faucet-key.mjs. It is
+# the mint authority for the mirror mints on the write cluster and nothing else,
+# but it is still a secret key.
+.faucet-key.json
 
 # The create-next-app scaffold history, kept out of the way when this became a
 # single repository. Nothing depends on it.

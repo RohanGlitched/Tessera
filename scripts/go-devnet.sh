@@ -52,12 +52,21 @@ step "Creating the mirror mints and regenerating web/lib/mirror.generated.ts"
 node scripts/setup-mirror.mjs --url devnet
 
 step "Seeding a few baskets"
+# Before the faucet split, because seeding mints component tokens to itself and
+# needs the mint authority this wallet still holds for one more step.
 node scripts/seed-baskets.mjs --url "$RPC" --keypair "$WALLET"
+
+step "Giving the faucet its own key"
+# Last, and deliberately so. Until now the deploy wallet has been the mint
+# authority, which is fine on a laptop and not fine in a hosting dashboard: that
+# wallet also holds the program's upgrade authority. This hands the mints to a key
+# that controls nothing else, and writes it into web/.env.local.
+node scripts/split-faucet-key.mjs --url "$RPC" --keypair "$WALLET"
 
 step "Done. Point the app at devnet"
 cat <<EOF
 
-Set these in web/.env.local, keeping FAUCET_SECRET_KEY as it is:
+web/.env.local now holds the faucet key. Set the other three:
 
   NEXT_PUBLIC_WRITE_CLUSTER=devnet
   NEXT_PUBLIC_WRITE_RPC=$RPC
@@ -65,6 +74,8 @@ Set these in web/.env.local, keeping FAUCET_SECRET_KEY as it is:
 
 Then rebuild:  cd web && pnpm build && pnpm start
 
-The faucet wallet needs a little devnet SOL of its own to pay fees when it hands
-out test tokens. Its address is the public key of FAUCET_SECRET_KEY.
+To re-seed baskets after this point, pass the faucet key instead of the deploy
+wallet, because the deploy wallet is no longer a mint authority:
+
+  node scripts/seed-baskets.mjs --url $RPC --keypair .faucet-key.json
 EOF

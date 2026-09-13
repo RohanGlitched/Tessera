@@ -98,6 +98,69 @@ yourself with two RPC calls.
 
 ---
 
+## Submission form copy
+
+Paste these three straight into the Project Info step.
+
+### Project Name
+
+```
+Tessera
+```
+
+### Short Description (280 max)
+
+```
+Anyone can launch an index fund of tokenized stocks in one transaction, and nobody has to trust the person who launched it. Baskets are backed in kind by a program vault, so no oracle is ever consulted and anyone can verify every share is fully backed with two RPC calls.
+```
+
+### Full Description (Markdown, 5000 max)
+
+```markdown
+## What it is
+
+An index fund is two things: a list of companies and a set of weights. Everything else the industry grew around it — a prospectus, an administrator, a custodian, a transfer agent — is administration. Tessera keeps the two things and deletes the administration.
+
+Pick up to eight tokenized equities, set their weights, and Tessera writes a recipe into a Solana program and hands it authority over a new share mint. The share becomes a claim on specific quantities of specific tokens in a vault anyone can read: create shares by depositing the components, redeem them by taking them back. No oracle is consulted, no manager can rebalance you, and no upgrade path lets the creator change what your share is a claim on. The creator earns up to 1% on every share created, paid in shares of their own basket, never out of the vault.
+
+## Who it is for
+
+**Someone with a view** — "semiconductors, equal weight" — who today would buy five tickers and rebalance by hand, and now holds one token others can buy too, earning a fee when they do. **Someone who wants that exposure without the work** holds the share instead of eight tokens. And **an arbitrageur** keeps it tracking: every basket page prints its premium against its own components, so that trade is open to anyone.
+
+## Why it has to be on chain, and why Solana
+
+Four things collapse into one transaction and cannot collapse anywhere else: issuing the instrument, taking custody of its backing, settling the exchange, and letting anybody verify the backing afterwards. An administrator does the first three; an auditor does the fourth, quarterly. Here the fourth is a `getTokenAccountBalance` call anyone can make, and every basket page makes it on load.
+
+Solana in particular, on two counts:
+
+1. **In-kind creation and redemption are only useful if they are cheap and immediate.** What keeps a fund tracking its holdings is arbitrage between the basket and its components, and that has to settle before the gap moves. Fractions of a cent per transaction are what make a hundred-dollar basket worth creating at all.
+2. **Token-2022 is load-bearing, not incidental.** These equities pay dividends by raising a `ScaledUiAmountConfig` multiplier rather than transferring anything, so a recipe in *displayed* balances would be short by exactly the dividends already accrued. Tessera writes recipes in raw units and multiplies through the live multiplier when pricing. The design would be wrong on a chain without token extensions.
+
+## The decisions worth arguing about
+
+- **In kind, so there is no price to argue with.** No oracle to go stale, manipulate, or pay for. Redemption cannot fail for market reasons: if every buyer disappears, a share is still a claim on specific tokens in a specific vault.
+- **Rounding always favors the people still holding.** Deposits round up and withdrawals round down, so the vault holds at or above what the outstanding shares can claim. Backing per share never falls, and the dust accrues to holders rather than to the fund.
+- **The fee comes out of shares, never the vault.** A creator who wants more has one lever: get more people to create shares. They cannot dilute holders or reach into the vault, because no instruction lets them.
+
+## What is real
+
+Prices, 24-hour moves, liquidity, holder counts and dividend multipliers are read live from Solana mainnet on every page load, and the 20 tokenized equities are the real xStocks by Backed Finance. Nothing on screen is a placeholder.
+
+Creating and redeeming run on devnet against faithful mirrors of the same mints: Token-2022, the same decimals, the same metadata, and a scaled-UI multiplier seeded from the live mainnet value. An unaudited program should not hold real tokenized Apple, and invented devnet prices would make every number a lie. Swapping the mirrors for the real mints is one generated file.
+
+## What it gives up, measured rather than asserted
+
+Creating shares requires holding every component first. That is the cost of refusing to trust a price. Rather than claim the cost is small, every basket page measures it: each component is quoted through Jupiter twice, dollars in and then straight back out, so the round trip is measured against one router instead of against a price feed that might disagree. On a live eight-component basket that is 0.17% for one share and 0.26% for a hundred, with the venues named per leg.
+
+The tokens are issued by Backed Finance. Tessera does not remove counterparty risk in a tokenized equity, only in the wrapper around it.
+
+## Execution
+
+Three program instructions and nine passing integration tests, including one that raises a component's dividend multiplier mid-test and asserts that raw mint and redeem amounts are unchanged. Vaults are constrained to the basket's own associated token account. Creation splits across two signatures when a basket would overflow Solana's 1232-byte packet limit. The limitations live in the product itself, on `/method`, not buried in a README.
+```
+
+---
+
 ## Demo video, 2 minutes 30
 
 | Time | Shot | Said |

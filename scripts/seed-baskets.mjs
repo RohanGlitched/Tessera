@@ -15,13 +15,23 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {
-  Connection,
   Keypair,
   PublicKey,
   SystemProgram,
   Transaction,
-  sendAndConfirmTransaction,
 } from "@solana/web3.js";
+import { resilientConnection, sendResilient } from "./lib/rpc.mjs";
+
+/**
+ * Every send in this script goes through the resilient wrapper.
+ *
+ * Shadowing the web3.js name keeps the call sites below unchanged and makes it
+ * impossible to reach the raw version by accident, which matters because there
+ * are six of them and missing one puts the whole run back at the mercy of a
+ * throttled endpoint.
+ */
+const sendAndConfirmTransaction = (conn, tx, signers, options) =>
+  sendResilient(conn, tx, signers, options);
 import {
   TOKEN_2022_PROGRAM_ID,
   ExtensionType,
@@ -216,7 +226,7 @@ async function fetchQuotes(symbols) {
 
 // --------------------------------------------------------------------------- main
 
-const connection = new Connection(url, "confirmed");
+const connection = resilientConnection(url);
 const payer = Keypair.fromSecretKey(
   Uint8Array.from(JSON.parse(fs.readFileSync(keypairPath, "utf8"))),
 );

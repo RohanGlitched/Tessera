@@ -25,7 +25,7 @@ their own basket, never out of the vault.
 |---|---|
 | Prices, 24-hour moves, liquidity, holders, dividend multipliers | **Solana mainnet, live** |
 | The 20 tokenised equities being composed | **Real xStocks by Backed Finance** |
-| Creating and redeeming shares | **A mirror cluster** (see below) |
+| Creating and redeeming shares | **Devnet**, against mirror mints (see below) |
 | The program's arithmetic | **9 passing integration tests** |
 
 Nothing on screen is a sample or a placeholder. Every figure in the market
@@ -235,6 +235,22 @@ Token-2022 mints. The devnet faucet rate-limits by IP, so if the script stops at
 the balance check, fund the address it prints at
 [faucet.solana.com](https://faucet.solana.com) and run it again.
 
+Its last step matters for anyone hosting this. Until then the deploy wallet is the
+mirror mints' mint authority, and the faucet route needs that authority's secret
+key — which would mean putting a wallet that also holds the program's upgrade
+authority into a hosting dashboard. `scripts/split-faucet-key.mjs` hands the mints
+to a key that controls nothing else, so the only secret a deployment needs is one
+that can mint twenty stand-ins on a test cluster.
+
+Both setup scripts run dozens of transactions against a public endpoint that
+answers a run like that with 429s, and a long enough burst of those outlives the
+blockhash the transaction was signed against. `scripts/lib/rpc.mjs` is the retry
+layer, and it is deliberately narrow about what it will retry: only failures that
+prove the transaction never executed. Notably not `block height exceeded`, because
+a transaction that expired in flight may still have landed, and a second
+`mint_shares` is not a no-op. Every step is also idempotent, so an interrupted run
+is finished by running it again.
+
 Run the program tests against a running validator with:
 
 ```bash
@@ -257,6 +273,8 @@ programs/tessera/src/lib.rs   the program: create, mint, redeem
 tests/tessera.ts              9 integration tests, including the dividend case
 scripts/setup-mirror.mjs      creates the mirror mints, writes mirror.generated.ts
 scripts/seed-baskets.mjs      a few baskets to look at
+scripts/split-faucet-key.mjs  moves mint authority off the deploy wallet
+scripts/lib/rpc.mjs           what is safe to retry against a throttled endpoint
 scripts/gen-universe.mjs      regenerates web/lib/universe.ts from mainnet
 scripts/build-diverging.mjs   generates and validates the 24h-move colour scale
 web/                          the Next.js app

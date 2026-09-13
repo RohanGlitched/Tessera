@@ -27,13 +27,13 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import {
-  Connection,
   Keypair,
   PublicKey,
   SystemProgram,
   Transaction,
   sendAndConfirmTransaction,
 } from "@solana/web3.js";
+import { resilientConnection, withRetry } from "./lib/rpc.mjs";
 import {
   TOKEN_2022_PROGRAM_ID,
   ExtensionType,
@@ -116,7 +116,9 @@ async function liveMultipliers() {
 
 // ------------------------------------------------------------------------ main
 
-const connection = new Connection(rpc, "confirmed");
+// Public devnet answers a 20-mint run with 429 storms, and a long enough storm
+// outlives the blockhash. See scripts/lib/rpc.mjs for what is safe to retry.
+const connection = resilientConnection(rpc);
 
 async function ensureMint(symbol, company, multiplier, existing) {
   if (existing) {
@@ -162,20 +164,34 @@ async function ensureMint(symbol, company, multiplier, existing) {
       TOKEN_2022_PROGRAM_ID,
     ),
   );
-  await sendAndConfirmTransaction(connection, tx, [payer, mint]);
+  await withRetry(
+    `${symbol} mint`,
+    async () => (await connection.getAccountInfo(mint.publicKey)) != null,
+    () => sendAndConfirmTransaction(connection, tx, [payer, mint]),
+  );
 
-  await tokenMetadataInitializeWithRentTransfer(
-    connection,
-    payer,
-    mint.publicKey,
-    payer.publicKey,
-    payer,
-    `${company} xStock (mirror)`,
-    symbol,
-    `https://xstocks-metadata.backed.fi/logos/tokens/${symbol}.png`,
-    undefined,
-    undefined,
-    TOKEN_2022_PROGRAM_ID,
+  // Metadata is appended into the mint account itself, so an init that landed
+  // shows up as an account longer than the bare extension layout.
+  await withRetry(
+    `${symbol} metadata`,
+    async () => {
+      const info = await connection.getAccountInfo(mint.publicKey);
+      return info != null && info.data.length > space;
+    },
+    () =>
+      tokenMetadataInitializeWithRentTransfer(
+        connection,
+        payer,
+        mint.publicKey,
+        payer.publicKey,
+        payer,
+        `${company} xStock (mirror)`,
+        symbol,
+        `https://xstocks-metadata.backed.fi/logos/tokens/${symbol}.png`,
+        undefined,
+        undefined,
+        TOKEN_2022_PROGRAM_ID,
+      ),
   );
 
   return { mint: mint.publicKey.toBase58(), created: true };
@@ -199,6 +215,14 @@ async function main() {
     : {};
   const perCluster = state[cluster] ?? {};
 
+  // Written after every mint rather than once at the end. The first devnet run
+  // died on mint 8 of 20 and orphaned the seven it had already paid rent for,
+  // because their addresses only existed in memory when it threw.
+  const saveState = () => {
+    state[cluster] = perCluster;
+    fs.writeFileSync(STATE, `${JSON.stringify(state, null, 2)}\n`);
+  };
+
   const rows = [];
   for (const stock of XSTOCKS) {
     const multiplier = multipliers.get(stock.symbol) ?? 1;
@@ -209,6 +233,7 @@ async function main() {
       perCluster[stock.symbol]?.mint,
     );
     perCluster[stock.symbol] = { mint, multiplier };
+    saveState();
 
     if (!created && has("refresh-multipliers") && multiplier > 1) {
       const onChain = await getMint(
@@ -243,10 +268,13 @@ async function main() {
     console.log(
       `${created ? "+" : "="} ${stock.symbol.padEnd(7)} ${mint}  x${multiplier.toFixed(7)}`,
     );
+
+    // A beat between creations. The public endpoint is markedly happier for it,
+    // and 20 mints is not a run worth optimising.
+    if (created) await new Promise((resolve) => setTimeout(resolve, 400));
   }
 
-  state[cluster] = perCluster;
-  fs.writeFileSync(STATE, `${JSON.stringify(state, null, 2)}\n`);
+  saveState();
 
   const body = rows
     .map(
