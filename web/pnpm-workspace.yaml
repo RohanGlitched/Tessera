@@ -1,11 +1,30 @@
+# Which dependencies may run install scripts. pnpm 12 refuses to install until
+# every one of these is answered, and a fresh CI install fails with
+# ERR_PNPM_IGNORED_BUILDS if they are left as the placeholder text pnpm writes.
+#
+# All false, deliberately. Every entry here is either a native accelerator with a
+# pure-JavaScript fallback, or a binding for hardware this build never touches, and
+# none of them have ever been built on the machine this app was developed and
+# verified on. Saying false is therefore not a guess about what is safe to skip: it
+# is the configuration the app has always run under. bigint-buffer announces the
+# fallback on startup, which is where "bigint: Failed to load bindings" comes from.
 allowBuilds:
-  '@stellar/stellar-sdk': set this to true or false
-  bigint-buffer: set this to true or false
-  blake-hash: set this to true or false
-  bufferutil: set this to true or false
-  protobufjs: set this to true or false
+  # Optional native speedups for ws. JavaScript fallbacks ship in the box.
+  bufferutil: false
+  utf-8-validate: false
+  # Native bigint conversion for @solana/web3.js, which falls back to pure JS.
+  bigint-buffer: false
+  # Hashing and curve bindings reached through the wallet adapters. The browser
+  # build uses the JavaScript paths.
+  blake-hash: false
+  tiny-secp256k1: false
+  # Ledger's USB transport. In a browser this goes through WebHID instead, so the
+  # node binding is dead weight.
+  usb: false
+  # Postinstall only generates a CLI shim, which nothing here calls.
+  protobufjs: false
+  # Pulled in transitively by a wallet adapter. Not on any path this app uses.
+  '@stellar/stellar-sdk': false
+  # Image optimisation we do not use, and the eslint resolver, needed only to lint.
   sharp: false
-  tiny-secp256k1: set this to true or false
   unrs-resolver: false
-  usb: set this to true or false
-  utf-8-validate: set this to true or false
