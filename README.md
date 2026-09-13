@@ -214,8 +214,18 @@ cp web/.env.example web/.env.local   # then fill in FAUCET_SECRET_KEY
 cd web && pnpm build && pnpm start
 ```
 
-Both scripts take `--url devnet` to target devnet instead, in which case set
-`NEXT_PUBLIC_WRITE_CLUSTER=devnet` in `web/.env.local`.
+To settle on devnet instead of a local validator, one script does the whole
+cutover — deploy, mirror mints, seed baskets, and print the three environment
+variables to change:
+
+```bash
+./scripts/go-devnet.sh
+```
+
+It needs about 3 SOL on the deploy wallet for a 280 KB program plus 20
+Token-2022 mints. The devnet faucet rate-limits by IP, so if the script stops at
+the balance check, fund the address it prints at
+[faucet.solana.com](https://faucet.solana.com) and run it again.
 
 Run the program tests against a running validator with:
 

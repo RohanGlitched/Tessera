@@ -4,6 +4,30 @@ import { useCallback, useEffect, useState } from "react";
 import { PublicKey } from "@solana/web3.js";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { fetchBaskets, fetchBasket, type Basket } from "./tessera";
+import { WRITE_CLUSTER, WRITE_RPC } from "./config";
+
+/**
+ * What to say when the read fails.
+ *
+ * A raw `fetch failed` tells a visitor nothing. The overwhelmingly likely cause is
+ * that the write cluster is a validator on somebody's laptop and this page is not
+ * on that laptop, so say that instead of the transport error — and keep the prices,
+ * which come from mainnet and are unaffected.
+ */
+function explainReadFailure(err: unknown): string {
+  const detail = err instanceof Error ? err.message : String(err);
+  const unreachable =
+    /fetch failed|Failed to fetch|NetworkError|ECONNREFUSED|Load failed/i.test(
+      detail,
+    );
+  if (unreachable && WRITE_CLUSTER === "localnet") {
+    return `Baskets live on a local validator at ${WRITE_RPC}, which this browser cannot reach. Prices on this page still come from mainnet. Run solana-test-validator to see baskets.`;
+  }
+  if (unreachable) {
+    return `Could not reach ${WRITE_CLUSTER} at ${WRITE_RPC}. Prices on this page still come from mainnet.`;
+  }
+  return `Could not read the program: ${detail}`;
+}
 
 /** Every basket on the write cluster. */
 export function useBaskets() {
@@ -16,11 +40,7 @@ export function useBaskets() {
       setBaskets(await fetchBaskets(connection));
       setError(null);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? `Could not read the program: ${err.message}`
-          : "Could not read the program.",
-      );
+      setError(explainReadFailure(err));
     }
   }, [connection]);
 
@@ -58,7 +78,7 @@ export function useBasket(address: string | null) {
       setBasket(found);
       setState("ready");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "read failed");
+      setError(explainReadFailure(err));
       setState("error");
     }
   }, [connection, address]);
