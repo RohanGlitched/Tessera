@@ -53,7 +53,13 @@ Three users, in the order they show up:
    which must be at or above the recipe. That is the whole trust model on one
    screen.
 5. **Mint, then redeem** — and see the backing figure hold.
-6. **`/method`** — including the section titled "What this gives up."
+6. **The last mile**, at the bottom of the basket page — press "100 shares."
+   Every component quoted through Jupiter twice, dollars in and straight back
+   out, so the round trip is the real cost of assembling a basket by hand. It is
+   0.17% for one share and 0.26% for a hundred, with the venues named. This is
+   the answer to the only serious objection to in-kind creation, and it is a
+   measurement rather than a claim.
+7. **`/method`** — including the section titled "What this gives up."
 
 ## Judging criteria, addressed
 
@@ -103,9 +109,11 @@ yourself with two RPC calls.
 | 1:20–1:40 | Lay the basket, wallet approval, success screen | "One transaction. The program now owns the share mint and cannot change the recipe." |
 | 1:40–2:10 | Basket page: recipe beside vault, the backing check | "Recipe on the left, what the vault actually holds on the right. Backing per share: computed from the vault's balance and the mint's supply. Two RPC calls, and you never trust me." |
 | 2:10–2:25 | Mint, then redeem, backing figure unchanged | "Create in kind. Redeem in kind. Rounding always favours whoever is still holding, so this number can only go up." |
-| 2:25–2:30 | `/method`, scrolled to "What this gives up" | "And here is what it costs you." |
+| 2:25–2:45 | The last mile, press "One share" then "100 shares" | "The obvious objection: you need all eight tokens first. So here is what that costs, quoted live — 0.17% for one share, 0.26% for a hundred. Not a claim. A measurement." |
+| 2:45–2:50 | `/method`, scrolled to "What this gives up" | "And here is the rest of what it costs you." |
 
-Record at 1440×900. The composer is laid out for that width.
+Record at 1440×900. The composer is laid out for that width. Runs to 2:50 with the
+last-mile beat; cut the dividend-tooltip shot at 0:15 if a hard 2:30 is required.
 
 ---
 

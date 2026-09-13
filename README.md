@@ -106,6 +106,14 @@ That is the cost of refusing to trust a price. A router can smooth it over for
 someone paying in one currency, and the honest statement is that the primitive
 underneath is in kind and the convenience is a layer on top.
 
+Rather than claim that cost is small, every basket page measures it. **The last
+mile** panel quotes each component through Jupiter twice — dollars in, then
+straight back out — and prints the round trip. On a live eight-component basket
+that is **0.17% for one share and 0.26% for a hundred**, with the venues named per
+leg. Comparing a route against a price feed would let two disagreeing sources make
+buying look free, so the measurement is against itself. Nothing is executed;
+`lib/fill-cost.ts` is the arithmetic.
+
 The tokens themselves are issued by Backed Finance, not by Tessera. Their
 transfer hooks, permanent delegate, and pause authority are theirs. Tessera does
 not remove counterparty risk in a tokenised equity; it removes counterparty risk
@@ -166,7 +174,7 @@ Next.js 16 App Router, React 19, Tailwind v4, `@solana/wallet-adapter`.
 | `/` | The market as a mosaic, sized by on-chain liquidity, plus the baskets that exist |
 | `/compose` | Click tiles to pick companies, drag weights, name the token, lay the basket |
 | `/explore` | Every basket, with its backing proof and premium to its own components |
-| `/basket/[address]` | One basket: recipe, vault contents, backing check, mint and redeem |
+| `/basket/[address]` | One basket: recipe, vault contents, backing check, mint and redeem, and what buying the components costs |
 | `/portfolio` | What you hold, what it is worth, and what it would redeem for |
 | `/method` | The document behind the product, including what it gives up |
 

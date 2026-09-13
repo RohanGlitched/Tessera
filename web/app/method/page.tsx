@@ -161,6 +161,15 @@ export default function MethodPage() {
               convenience is a layer on top.
             </p>
             <p>
+              Rather than assert that the cost is small, every basket page measures
+              it. The panel called{" "}
+              <em className="not-italic text-ivory">the last mile</em> quotes each
+              component through a live router twice, dollars in and then straight
+              back out, and prints the round trip. On a typical eight-component
+              basket it lands under a quarter of a percent, and it grows with size,
+              which the panel also shows.
+            </p>
+            <p>
               The tokens themselves are issued by Backed Finance, not by us. Their
               transfer hooks, permanent delegate, and pause authority are theirs.
               Tessera does not remove counterparty risk in the tokenised equity; it

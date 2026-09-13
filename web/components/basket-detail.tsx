@@ -11,6 +11,7 @@ import { useMarket } from "./market-provider";
 import { BasketMosaic } from "./basket-mosaic";
 import { Figure } from "./figure";
 import { FaucetButton } from "./faucet-button";
+import { FillCostPanel } from "./fill-cost";
 import { TOKEN_2022_PROGRAM_ID, ONE_SHARE } from "@/lib/tessera";
 import {
   buildMintShares,
@@ -266,6 +267,8 @@ function Loaded({
         <Composition basket={basket} valuation={valuation} />
         <Backing basket={basket} onChain={onChain} />
       </div>
+
+      <FillCostPanel components={valuation.components} nav={valuation.nav} />
 
       <div className="mt-16 flex flex-wrap items-baseline justify-between gap-5 border-t border-rule pt-7 text-sm">
         <p className="max-w-[62ch] leading-relaxed text-ivory-dim">
