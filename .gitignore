@@ -33,3 +33,15 @@ web/next-env.d.ts
 .mirror-state.json
 
 .DS_Store
+
+# Editor and assistant scratch files. web/AGENTS.md in particular is regenerated
+# by `next dev` on every run, so tracking it means a permanent dirty file.
+AGENTS.md
+CLAUDE.md
+web/AGENTS.md
+web/CLAUDE.md
+.claude/
+
+# Submission prep: form copy, the shot list for the demo, and rubric notes.
+# Useful locally, not part of the project.
+SUBMISSION.md

@@ -275,6 +275,7 @@ scripts/setup-mirror.mjs      creates the mirror mints, writes mirror.generated.
 scripts/seed-baskets.mjs      a few baskets to look at
 scripts/split-faucet-key.mjs  moves mint authority off the deploy wallet
 scripts/lib/rpc.mjs           what is safe to retry against a throttled endpoint
+scripts/lib/color.mjs         OKLCH, colour-vision simulation, palette checks
 scripts/gen-universe.mjs      regenerates web/lib/universe.ts from mainnet
 scripts/build-diverging.mjs   generates and validates the 24h-move colour scale
 web/                          the Next.js app

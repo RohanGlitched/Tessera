@@ -6,8 +6,8 @@
  * lays a row along the shorter side of the remaining space and stops adding to
  * that row the moment the worst aspect ratio in it starts getting worse.
  *
- * No dependency does this in fifteen lines, and every one of them ships a scale
- * and a colour opinion Tessera does not want. So it lives here.
+ * Implemented here rather than pulled in: the algorithm is fifteen lines, and the
+ * libraries that offer it also impose their own scales and colour choices.
  */
 
 export type TreemapInput = { key: string; value: number };
@@ -134,11 +134,10 @@ export function squarify(
 /**
  * Whether a tile is wide enough for a string, without measuring it.
  *
- * A treemap label has nothing to clip it, so a ticker one pixel too long for its
- * tessera is drawn straight across the neighbour — GOOGL did exactly that on a
- * narrow screen. Both faces here sit near 0.68em per uppercase glyph and per
- * tabular digit, which errs on the wide side for lowercase, so a label that
- * passes has room to spare and one that fails would have spilled.
+ * SVG text has no clipping box, so a ticker one pixel too long for its tessera
+ * renders straight across its neighbour. Both faces sit near 0.68em per uppercase
+ * glyph and per tabular digit, which errs wide for lowercase: a label that passes
+ * has room to spare.
  */
 export function fitsTile(
   text: string,

@@ -5,7 +5,7 @@ import { MAX_COMPONENTS } from "@/lib/config";
  * Quote what it would cost to buy a whole recipe with USDC.
  *
  * Proxied for the same reason the market snapshot is: the routing endpoint limits
- * by IP, and a room full of judges is one IP. Unlike the snapshot this is a POST
+ * by IP, which visitors behind one NAT share. Unlike the snapshot this is a POST
  * with a body, so it is not cached by the CDN — it is only ever called when
  * somebody asks for it, one call per basket, not on page load.
  */

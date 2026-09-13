@@ -1,14 +1,11 @@
 /**
- * Tessera runs on two clusters at once, on purpose.
+ * Tessera reads from one cluster and writes to another.
  *
- * Every price, every premium, every dividend multiplier on screen is read from
- * Solana mainnet, because the twenty xStocks that Tessera composes only exist
- * there. Minting and redeeming run on the cluster in NEXT_PUBLIC_WRITE_CLUSTER,
- * against mock mints that mirror the mainnet ones extension for extension.
- *
- * The alternative — quoting made-up prices on devnet — would make every figure in
- * the product a lie. This way the only thing that is a stand-in is the settlement
- * layer, and it is a faithful one.
+ * Prices, premiums and dividend multipliers come from mainnet, because the twenty
+ * xStocks only exist there. Minting and redeeming run on
+ * NEXT_PUBLIC_WRITE_CLUSTER against mock mints that mirror the mainnet ones
+ * extension for extension, so the only stand-in is the settlement layer and every
+ * figure on screen stays real.
  */
 
 export const MAINNET_RPC =

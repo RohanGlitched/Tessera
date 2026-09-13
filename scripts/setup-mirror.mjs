@@ -215,9 +215,9 @@ async function main() {
     : {};
   const perCluster = state[cluster] ?? {};
 
-  // Written after every mint rather than once at the end. The first devnet run
-  // died on mint 8 of 20 and orphaned the seven it had already paid rent for,
-  // because their addresses only existed in memory when it threw.
+  // Written after every mint, not once at the end. A run that throws partway
+  // through has already paid rent on the mints it created, and their addresses
+  // are unrecoverable if they only ever existed in memory.
   const saveState = () => {
     state[cluster] = perCluster;
     fs.writeFileSync(STATE, `${JSON.stringify(state, null, 2)}\n`);

@@ -3,11 +3,11 @@ import { fetchMarket } from "@/lib/market";
 /**
  * The market snapshot, proxied server-side.
  *
- * Two reasons it is not fetched straight from the browser: the upstream is rate
- * limited per IP and a room full of judges is one IP, and a proxy lets one
- * response serve every open tab. Ten seconds of shared cache is well inside the
- * time it takes a price to move meaningfully, and stale-while-revalidate means
- * nobody ever waits on the upstream.
+ * Not fetched from the browser: the upstream rate limits per IP, and visitors
+ * behind one NAT share that budget. Proxying lets a single response serve every
+ * open tab. Ten seconds of shared cache sits well inside the time a price takes
+ * to move meaningfully, and stale-while-revalidate means nobody waits on the
+ * upstream.
  */
 export const dynamic = "force-dynamic";
 
