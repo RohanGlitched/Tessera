@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+/*
+  Tessera's surfaces are a deep lapis, the ground of a Byzantine mosaic, with
+  limestone-ivory type over it. Data colours live in lib/palette.ts and are
+  validated by scripts/build-palette.mjs — never hand-pick a chart colour here.
+*/
+@theme {
+  --color-ground: #0f1b33;
+  --color-ground-deep: #0a1224;
+  --color-ground-raised: #16233d;
+  --color-ground-high: #1d2c4a;
+
+  --color-ivory: #ede6d6;
+  --color-ivory-dim: #b3ab9c;
+  --color-ivory-faint: #7c8090;
+
+  --color-rule: #24314e;
+  --color-rule-bright: #35446a;
+
+  --color-gold: #b18827;
+
+  --color-gain: #05aa9e;
+  --color-loss: #e46a49;
+  --color-flat: #616367;
+
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
+
+  --text-hero: clamp(2.75rem, 7vw, 6rem);
+  --text-title: clamp(1.75rem, 3.2vw, 2.75rem);
+}
+
+html {
+  background: var(--color-ground-deep);
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-ground-deep);
+  color: var(--color-ivory);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv05" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Every figure in the product is tabular, so columns of numbers line up and a
+   changing price never shifts the layout under the reader's eye. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+/* A hairline that reads as inlaid grout rather than a border. */
+.grout {
+  border-color: var(--color-rule);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-gold) 45%, transparent);
+  color: var(--color-ivory);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: 1px;
+}
+
+/* Only the market clock animates unprompted, and only because a clock that does
+   not move is broken. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@keyframes tessera-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.pulse {
+  animation: tessera-pulse 2.4s ease-in-out infinite;
+}
+
+/* Thin scrollbars so dense tables do not gain a heavy chrome edge. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-rule-bright) transparent;
+}

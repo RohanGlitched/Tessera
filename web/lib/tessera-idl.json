@@ -1,0 +1,600 @@
+{
+  "address": "F8QLTZPe9mJuPgXCbccnU9G2kMSEE4inygdUw3QZbrQ",
+  "metadata": {
+    "name": "tessera",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Tessera: permissionless in-kind index baskets for tokenized equities on Solana"
+  },
+  "instructions": [
+    {
+      "name": "create_basket",
+      "docs": [
+        "Publish a basket recipe and take ownership of its share mint.",
+        "",
+        "The share mint is created by the client (a Token-2022 mint carrying",
+        "on-chain metadata) with its mint authority already set to this basket's",
+        "PDA. We verify that here rather than trusting it."
+      ],
+      "discriminator": [
+        47,
+        105,
+        155,
+        148,
+        15,
+        169,
+        202,
+        211
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "basket",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  115,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
+                "kind": "arg",
+                "path": "symbol"
+              }
+            ]
+          }
+        },
+        {
+          "name": "share_mint"
+        },
+        {
+          "name": "component_token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "symbol",
+          "type": "string"
+        },
+        {
+          "name": "creator_fee_bps",
+          "type": "u16"
+        },
+        {
+          "name": "components",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "ComponentArg"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "mint_shares",
+      "docs": [
+        "Deposit the recipe in kind and receive `shares` share tokens.",
+        "",
+        "`remaining_accounts` is three per component, in basket order:",
+        "`[component_mint, depositor_token_account, basket_vault_ata]`."
+      ],
+      "discriminator": [
+        24,
+        196,
+        132,
+        0,
+        183,
+        158,
+        216,
+        142
+      ],
+      "accounts": [
+        {
+          "name": "basket",
+          "writable": true
+        },
+        {
+          "name": "share_mint",
+          "writable": true
+        },
+        {
+          "name": "depositor",
+          "signer": true
+        },
+        {
+          "name": "depositor_share_account",
+          "writable": true
+        },
+        {
+          "name": "creator_share_account",
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "share_token_program"
+        },
+        {
+          "name": "component_token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "shares",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "redeem_shares",
+      "docs": [
+        "Burn `shares` and take the underlying components back out, pro rata.",
+        "",
+        "`remaining_accounts` is three per component, in basket order:",
+        "`[component_mint, basket_vault_ata, recipient_token_account]`."
+      ],
+      "discriminator": [
+        239,
+        154,
+        224,
+        89,
+        240,
+        196,
+        42,
+        187
+      ],
+      "accounts": [
+        {
+          "name": "basket",
+          "writable": true
+        },
+        {
+          "name": "share_mint",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true
+        },
+        {
+          "name": "owner_share_account",
+          "writable": true
+        },
+        {
+          "name": "share_token_program"
+        },
+        {
+          "name": "component_token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "shares",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Basket",
+      "discriminator": [
+        219,
+        79,
+        107,
+        135,
+        231,
+        243,
+        218,
+        248
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "BasketCreated",
+      "discriminator": [
+        26,
+        146,
+        108,
+        155,
+        189,
+        85,
+        8,
+        7
+      ]
+    },
+    {
+      "name": "SharesMinted",
+      "discriminator": [
+        127,
+        139,
+        238,
+        41,
+        118,
+        47,
+        122,
+        39
+      ]
+    },
+    {
+      "name": "SharesRedeemed",
+      "discriminator": [
+        232,
+        166,
+        7,
+        56,
+        67,
+        19,
+        42,
+        117
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "NameTooLong",
+      "msg": "Basket name must be 1 to 32 characters"
+    },
+    {
+      "code": 6001,
+      "name": "SymbolTooLong",
+      "msg": "Basket symbol must be 1 to 10 characters"
+    },
+    {
+      "code": 6002,
+      "name": "CreatorFeeTooHigh",
+      "msg": "Creator fee cannot exceed 1%"
+    },
+    {
+      "code": 6003,
+      "name": "BadComponentCount",
+      "msg": "A basket holds between 1 and 8 components"
+    },
+    {
+      "code": 6004,
+      "name": "WeightsMustSumToOne",
+      "msg": "Component weights must add up to 100%"
+    },
+    {
+      "code": 6005,
+      "name": "DuplicateComponent",
+      "msg": "The same component was listed twice"
+    },
+    {
+      "code": 6006,
+      "name": "ZeroWeight",
+      "msg": "Every component needs a non-zero weight"
+    },
+    {
+      "code": 6007,
+      "name": "ZeroUnits",
+      "msg": "Every component needs a non-zero unit amount"
+    },
+    {
+      "code": 6008,
+      "name": "ShareMintDecimals",
+      "msg": "Share mint must have 6 decimals"
+    },
+    {
+      "code": 6009,
+      "name": "ShareMintNotEmpty",
+      "msg": "Share mint already has a supply"
+    },
+    {
+      "code": 6010,
+      "name": "ShareMintAuthority",
+      "msg": "Share mint authority must be the basket"
+    },
+    {
+      "code": 6011,
+      "name": "ShareMintFreezable",
+      "msg": "Share mint must not have a freeze authority"
+    },
+    {
+      "code": 6012,
+      "name": "ShareMintMismatch",
+      "msg": "Share mint does not match the basket"
+    },
+    {
+      "code": 6013,
+      "name": "WrongTokenProgram",
+      "msg": "Component lives on a different token program"
+    },
+    {
+      "code": 6014,
+      "name": "ComponentMintMismatch",
+      "msg": "Component mint does not match the basket recipe"
+    },
+    {
+      "code": 6015,
+      "name": "AccountCountMismatch",
+      "msg": "Wrong number of accounts for this basket"
+    },
+    {
+      "code": 6016,
+      "name": "VaultMismatch",
+      "msg": "Vault is not the basket's associated token account"
+    },
+    {
+      "code": 6017,
+      "name": "TokenAccountMintMismatch",
+      "msg": "Token account belongs to a different mint"
+    },
+    {
+      "code": 6018,
+      "name": "MalformedMint",
+      "msg": "Mint account data is malformed"
+    },
+    {
+      "code": 6019,
+      "name": "MalformedTokenAccount",
+      "msg": "Token account data is malformed"
+    },
+    {
+      "code": 6020,
+      "name": "MissingCreatorShareAccount",
+      "msg": "Creator share account is required when a creator fee is set"
+    },
+    {
+      "code": 6021,
+      "name": "ZeroShares",
+      "msg": "Share amount must be greater than zero"
+    },
+    {
+      "code": 6022,
+      "name": "DustMint",
+      "msg": "Share amount is too small to deposit against"
+    },
+    {
+      "code": 6023,
+      "name": "MathOverflow",
+      "msg": "Arithmetic overflow"
+    }
+  ],
+  "types": [
+    {
+      "name": "Basket",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "share_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_program",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "creator_fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "component_count",
+            "type": "u8"
+          },
+          {
+            "name": "components",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "Component"
+                  }
+                },
+                8
+              ]
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "mint_count",
+            "type": "u64"
+          },
+          {
+            "name": "redeem_count",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BasketCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "basket",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "share_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "component_count",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Component",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "units_per_share",
+            "docs": [
+              "Raw token units of this component backing one whole share."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "weight_bps",
+            "docs": [
+              "Target weight at creation, recorded so drift is measurable later."
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "decimals",
+            "type": "u8"
+          },
+          {
+            "name": "_padding",
+            "type": {
+              "array": [
+                "u8",
+                5
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ComponentArg",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "units_per_share",
+            "type": "u64"
+          },
+          {
+            "name": "weight_bps",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SharesMinted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "basket",
+            "type": "pubkey"
+          },
+          {
+            "name": "depositor",
+            "type": "pubkey"
+          },
+          {
+            "name": "shares_issued",
+            "type": "u64"
+          },
+          {
+            "name": "creator_fee_shares",
+            "type": "u64"
+          },
+          {
+            "name": "amounts",
+            "type": {
+              "array": [
+                "u64",
+                8
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SharesRedeemed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "basket",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "shares_burned",
+            "type": "u64"
+          },
+          {
+            "name": "amounts",
+            "type": {
+              "array": [
+                "u64",
+                8
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

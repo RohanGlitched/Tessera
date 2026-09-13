@@ -1,0 +1,30 @@
+# Anchor / Rust
+.anchor
+target
+**/*.rs.bk
+test-ledger
+
+# Node
+node_modules
+.yarn
+*.tsbuildinfo
+
+# Next.js
+web/.next
+web/out
+web/next-env.d.ts
+
+# Secrets. The faucet key that funds throwaway test wallets lives in
+# web/.env.local and must never be committed.
+.env
+.env.*
+!.env.example
+
+# The create-next-app scaffold history, kept out of the way when this became a
+# single repository. Nothing depends on it.
+.web-git-scaffold
+
+# Local mirror addresses, rewritten by scripts/setup-mirror.mjs per cluster.
+.mirror-state.json
+
+.DS_Store

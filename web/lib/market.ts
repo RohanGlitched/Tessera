@@ -1,0 +1,239 @@
+/**
+ * Live market data for the twenty tokenised equities Tessera composes.
+ *
+ * Everything here comes from Solana mainnet by way of Jupiter's public price and
+ * token endpoints, which need no key. One call covers the whole universe and
+ * carries three things no other source gives together:
+ *
+ *   usdPrice        the token's price on Solana, right now, 24 hours a day
+ *   stockData.price the real listed share's last price, for the premium or
+ *                   discount the token is trading at
+ *   scaledUiConfig  the Token-2022 ScaledUiAmount multiplier, which is how these
+ *                   tokens pay dividends, plus the next scheduled step and when
+ *                   it takes effect
+ *
+ * The third is the one almost nothing surfaces. A holder's balance grows without
+ * a transaction ever appearing: the mint's multiplier rises and every balance is
+ * restated. Read the raw balance and divide by 10^decimals, as most apps do, and
+ * you understate what somebody owns.
+ */
+
+import { XSTOCKS, BY_MINT, type XStock } from "./universe";
+
+const JUP_PRICE = "https://lite-api.jup.ag/price/v3";
+const JUP_SEARCH = "https://lite-api.jup.ag/tokens/v2/search";
+
+type JupPrice = {
+  usdPrice?: number;
+  priceChange24h?: number;
+  liquidity?: number;
+  decimals?: number;
+  blockId?: number;
+  stockData?: { price?: number; mcap?: number; updatedAt?: string };
+  scaledUiConfig?: {
+    multiplier?: number;
+    newMultiplier?: number;
+    newMultiplierEffectiveAt?: string;
+    usdPricePrescaled?: number;
+    circSupplyPrescaled?: number;
+  };
+};
+
+type JupToken = {
+  id: string;
+  holderCount?: number;
+  liquidity?: number;
+  usdPrice?: number;
+  mcap?: number;
+  organicScore?: number;
+  stats24h?: {
+    priceChange?: number;
+    buyVolume?: number;
+    sellVolume?: number;
+    numTraders?: number;
+  };
+};
+
+/** One tile of the market mosaic. */
+export type Quote = {
+  symbol: string;
+  base: string;
+  company: string;
+  mint: string;
+  decimals: number;
+
+  /** Price of one token on Solana, in USD. Live around the clock. */
+  price: number;
+  /** 24h change in the token's own price, in percent. */
+  change24h: number | null;
+  /** Depth of the on-chain market, in USD. Tile area is drawn from this. */
+  liquidity: number;
+  /** 24h traded volume across both sides, in USD. */
+  volume24h: number | null;
+  holders: number | null;
+  /** Market capitalisation of the token on Solana. */
+  onChainMcap: number | null;
+
+  /** Last price of the actual listed share, in USD. */
+  sharePrice: number | null;
+  /**
+   * How far the token trades from the share it represents, in percent. Positive
+   * is a premium. Anyone can close this gap: Backed will create or redeem the
+   * token one-for-one against the real share.
+   */
+  premiumBps: number | null;
+
+  /**
+   * The multiplier in force now. One raw unit of the mint is worth this many
+   * nominal shares, and it only ever rises.
+   */
+  multiplier: number;
+  /** The next multiplier, if one is already scheduled on the mint. */
+  nextMultiplier: number | null;
+  nextMultiplierAt: string | null;
+  /**
+   * Dividends collected since the token launched, as a percentage of principal.
+   * This is the multiplier minus one: nothing more, nothing less.
+   */
+  accruedYieldPct: number;
+  /** Whether this token has ever paid a dividend through its multiplier. */
+  paysDividend: boolean;
+};
+
+export type MarketSnapshot = {
+  quotes: Quote[];
+  /** Unix seconds. */
+  fetchedAt: number;
+  /** Mainnet slot the prices were read at, when Jupiter reports one. */
+  blockId: number | null;
+  /** Tickers we asked for and did not get back. Shown, never hidden. */
+  missing: string[];
+};
+
+const mints = XSTOCKS.map((s) => s.mint);
+
+async function getJson<T>(url: string): Promise<T | null> {
+  try {
+    const res = await fetch(url, {
+      headers: { accept: "application/json" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(12_000),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The multiplier that applies right now.
+ *
+ * A mint can carry a scheduled step: a new multiplier and the timestamp it turns
+ * on. Token-2022 switches over on its own at that moment, so once the timestamp
+ * has passed the new value is the live one.
+ */
+export function effectiveMultiplier(
+  cfg: JupPrice["scaledUiConfig"],
+  now = Date.now(),
+): { current: number; next: number | null; nextAt: string | null } {
+  if (!cfg) return { current: 1, next: null, nextAt: null };
+  const base = cfg.multiplier ?? 1;
+  const stepAt = cfg.newMultiplierEffectiveAt
+    ? Date.parse(cfg.newMultiplierEffectiveAt)
+    : NaN;
+  const step = cfg.newMultiplier ?? null;
+
+  if (step != null && Number.isFinite(stepAt) && stepAt <= now) {
+    return { current: step, next: null, nextAt: null };
+  }
+  return {
+    current: base,
+    next: step != null && step > base ? step : null,
+    nextAt: Number.isFinite(stepAt) ? cfg.newMultiplierEffectiveAt! : null,
+  };
+}
+
+function buildQuote(
+  stock: XStock,
+  price: JupPrice | undefined,
+  token: JupToken | undefined,
+): Quote | null {
+  const usd = price?.usdPrice;
+  if (usd == null || !Number.isFinite(usd) || usd <= 0) return null;
+
+  const share = price?.stockData?.price ?? null;
+  const mult = effectiveMultiplier(price?.scaledUiConfig);
+  const vol =
+    token?.stats24h?.buyVolume != null || token?.stats24h?.sellVolume != null
+      ? (token?.stats24h?.buyVolume ?? 0) + (token?.stats24h?.sellVolume ?? 0)
+      : null;
+
+  return {
+    symbol: stock.symbol,
+    base: stock.base,
+    company: stock.company,
+    mint: stock.mint,
+    decimals: price?.decimals ?? stock.decimals,
+
+    price: usd,
+    change24h: price?.priceChange24h ?? token?.stats24h?.priceChange ?? null,
+    liquidity: price?.liquidity ?? token?.liquidity ?? 0,
+    volume24h: vol,
+    holders: token?.holderCount ?? null,
+    onChainMcap: token?.mcap ?? null,
+
+    sharePrice: share,
+    premiumBps:
+      share != null && share > 0 ? ((usd - share) / share) * 10_000 : null,
+
+    multiplier: mult.current,
+    nextMultiplier: mult.next,
+    nextMultiplierAt: mult.nextAt,
+    accruedYieldPct: (mult.current - 1) * 100,
+    paysDividend: mult.current > 1,
+  };
+}
+
+/** Read the whole universe. Two calls, no key, no cache. */
+export async function fetchMarket(): Promise<MarketSnapshot> {
+  const ids = mints.join(",");
+  const [prices, tokens] = await Promise.all([
+    getJson<Record<string, JupPrice>>(`${JUP_PRICE}?ids=${ids}`),
+    getJson<JupToken[]>(`${JUP_SEARCH}?query=${ids}`),
+  ]);
+
+  const byId = new Map<string, JupToken>();
+  for (const t of tokens ?? []) byId.set(t.id, t);
+
+  const quotes: Quote[] = [];
+  const missing: string[] = [];
+  for (const stock of XSTOCKS) {
+    const q = buildQuote(stock, prices?.[stock.mint], byId.get(stock.mint));
+    if (q) quotes.push(q);
+    else missing.push(stock.symbol);
+  }
+
+  quotes.sort((a, b) => b.liquidity - a.liquidity);
+
+  const blockIds = Object.values(prices ?? {})
+    .map((p) => p.blockId)
+    .filter((b): b is number => typeof b === "number");
+
+  return {
+    quotes,
+    fetchedAt: Math.floor(Date.now() / 1000),
+    blockId: blockIds.length ? Math.max(...blockIds) : null,
+    missing,
+  };
+}
+
+/** Look up one ticker in a snapshot. */
+export function quoteFor(
+  snapshot: MarketSnapshot | null,
+  mint: string,
+): Quote | undefined {
+  return snapshot?.quotes.find((q) => q.mint === mint);
+}
+
+export { BY_MINT };
