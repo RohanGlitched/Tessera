@@ -180,15 +180,47 @@ last-mile beat; cut the dividend-tooltip shot at 0:15 if a hard 2:30 is required
 
 ---
 
+## Before you record: what the wallet on screen needs
+
+The site is on devnet, so the wallet in the browser has to be too, and it has to
+have a little SOL. Nothing else is a prerequisite — the tokens come from the app.
+
+**1. Put the wallet on devnet.** Phantom: Settings → Developer Settings → Testnet
+Mode on, then pick Solana Devnet. Solflare: the network dropdown, top right.
+Getting this wrong is the one failure that looks like a bug on camera — the site
+will load fine, the wallet will connect fine, and the transaction will fail with
+something unhelpful.
+
+**2. Put SOL in it.** One SOL is roughly fifty basket launches, so there is no
+reason to be careful. Either use [faucet.solana.com](https://faucet.solana.com),
+or send it from the wallet that did the deploy, which still holds about 3:
+
+```bash
+solana transfer <YOUR_BROWSER_WALLET> 1 --url devnet --allow-unfunded-recipient
+```
+
+**3. Do not fund it with the component tokens.** Press **Get test tokens** in the
+app instead. The button is on every basket page and on the portfolio, and it
+hands over all eight components at once. The faucet pays for the token accounts
+as well as the tokens, so this step costs the wallet on screen nothing at all.
+There is a 60-second cooldown per wallet, so press it once before you start
+recording rather than mid-take.
+
+Where the SOL actually goes, for the record: launching an eight-component basket
+costs **0.0183 SOL**, and all of it is rent on accounts that did not exist before
+— 0.0024 for the share mint, 0.0039 for the basket's own record, and 0.0015 for
+each of the eight vaults. Fees are the rounding error. Minting and redeeming
+after that are fractions of a cent, because the accounts already exist.
+
 ## Still to do before submitting
 
-- [ ] **Devnet.** `./scripts/go-devnet.sh` does the whole cutover but needs about
-      3 SOL on `7md5ecBazJtGoHEkRvQaVSdNz7pyJrbmrHgx1L5NVJb4`. The faucet
-      rate-limits this IP, so the SOL has to come from
-      [faucet.solana.com](https://faucet.solana.com) in a browser.
-- [ ] **Host it.** The read side works from anywhere; the write side needs devnet
-      done first. Deploying needs a Vercel/Netlify login, and the four variables
-      from `web/.env.example` set in the dashboard — `FAUCET_SECRET_KEY` as a
-      secret, not a public one.
-- [ ] **Push the repository** and put the URL in the submission form.
+- [x] **Devnet.** Program, 20 mirror mints and three baskets are live on devnet,
+      and the faucet answers to a key that holds nothing else.
+- [x] **Host it.** Deployed to Vercel with the four environment variables set for
+      production and preview.
+- [ ] **Turn off Vercel's deployment protection**, or the judges get a login wall
+      instead of the app. Project → Settings → Deployment Protection → Vercel
+      Authentication → Disabled.
+- [ ] **Push the repository.** The remote is set and the commits are ready; the
+      push needs a credential GitHub will accept from this machine.
 - [ ] **Record the video** to the table above.
