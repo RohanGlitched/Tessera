@@ -38,6 +38,7 @@ import { resilientConnection, sendResilient } from "./lib/rpc.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const STATE = path.join(ROOT, ".mirror-state.json");
+const PRESTOCKS_STATE = path.join(ROOT, ".mirror-state-prestocks.json");
 const KEY_FILE = path.join(ROOT, ".faucet-key.json");
 const ENV_FILE = path.join(ROOT, "web/.env.local");
 
@@ -115,8 +116,13 @@ async function main() {
     process.exit(1);
   }
   const state = JSON.parse(fs.readFileSync(STATE, "utf8"));
-  const mints = state[cluster];
-  if (!mints || Object.keys(mints).length === 0) {
+  const prestocksState = fs.existsSync(PRESTOCKS_STATE)
+    ? JSON.parse(fs.readFileSync(PRESTOCKS_STATE, "utf8"))
+    : {};
+  // Two separate mirror pipelines, xStocks and PreStocks, each with its own
+  // state file — merged here so one faucet key ends up authority over both.
+  const mints = { ...(state[cluster] ?? {}), ...(prestocksState[cluster] ?? {}) };
+  if (Object.keys(mints).length === 0) {
     console.error(`No mirror mints recorded for ${cluster}.`);
     process.exit(1);
   }
