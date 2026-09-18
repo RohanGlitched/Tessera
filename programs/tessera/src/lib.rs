@@ -13,9 +13,17 @@
 //! extension that xStocks use to accrue dividends multiplies the *displayed*
 //! balance, never the raw balance, so a raw-unit recipe is unaffected by it and
 //! dividend accrual flows through to holders automatically.
+//!
+//! Some components (PreStocks pre-IPO tokens) also carry `TransferFeeConfig`,
+//! which skims a fee out of every transfer at the token-program level. A
+//! deposit grosses up for that fee so the vault still receives exactly the
+//! recipe amount; a redemption pays the fee out of what leaves the vault,
+//! same as any other holder of that token would.
 
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{self, Burn, MintTo, TokenInterface, TransferChecked};
+use spl_token_2022::extension::{transfer_fee::TransferFeeConfig, BaseStateWithExtensions, StateWithExtensions};
+use spl_token_2022::state::Mint as SplMint;
 
 declare_id!("F8QLTZPe9mJuPgXCbccnU9G2kMSEE4inygdUw3QZbrQ");
 
@@ -167,6 +175,7 @@ pub mod tessera {
         );
 
         let mut deposited = [0u64; MAX_COMPONENTS];
+        let epoch = Clock::get()?.epoch;
 
         for i in 0..count {
             let component = basket.components[i];
@@ -179,8 +188,10 @@ pub mod tessera {
                 TesseraError::ComponentMintMismatch
             );
             // Deposits round up, so rounding dust accrues to the vault.
-            let amount = mul_div_ceil(component.units_per_share, shares, ONE_SHARE)?;
-            require!(amount > 0, TesseraError::DustMint);
+            let target = mul_div_ceil(component.units_per_share, shares, ONE_SHARE)?;
+            require!(target > 0, TesseraError::DustMint);
+            // Grossed up for any transfer fee, so the vault still nets `target`.
+            let amount = gross_for_transfer_fee(mint_info, target, epoch)?;
 
             verify_vault(vault_info, &basket_key, &component.mint, &token_program_key)?;
             verify_token_account(from_info, &component.mint)?;
@@ -569,6 +580,22 @@ fn verify_token_account(account: &AccountInfo, mint: &Pubkey) -> Result<()> {
         TesseraError::TokenAccountMintMismatch
     );
     Ok(())
+}
+
+/// The raw amount to send so that, after any Token-2022 transfer fee, the
+/// recipient nets exactly `target`. Mints without `TransferFeeConfig` (every
+/// xStock, and legacy SPL Token mints) pass through unchanged.
+fn gross_for_transfer_fee(mint_info: &AccountInfo, target: u64, epoch: u64) -> Result<u64> {
+    let data = mint_info.try_borrow_data()?;
+    let state = StateWithExtensions::<SplMint>::unpack(&data)
+        .map_err(|_| TesseraError::MalformedMint)?;
+    match state.get_extension::<TransferFeeConfig>() {
+        Ok(cfg) => cfg
+            .get_epoch_fee(epoch)
+            .calculate_pre_fee_amount(target)
+            .ok_or_else(|| TesseraError::MathOverflow.into()),
+        Err(_) => Ok(target),
+    }
 }
 
 fn mul_div_floor(a: u64, b: u64, d: u64) -> Result<u64> {

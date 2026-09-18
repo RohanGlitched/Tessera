@@ -26,7 +26,7 @@ their own basket, never out of the vault.
 | Prices, 24-hour moves, liquidity, holders, dividend multipliers | **Solana mainnet, live** |
 | The 20 tokenised equities being composed | **Real xStocks by Backed Finance** |
 | Creating and redeeming shares | **Devnet**, against mirror mints (see below) |
-| The program's arithmetic | **9 passing integration tests** |
+| The program's arithmetic | **10 passing integration tests** |
 
 Nothing on screen is a sample or a placeholder. Every figure in the market
 mosaic, every premium against the listed share, and every dividend-accrual number
@@ -121,6 +121,77 @@ in the wrapper around it.
 
 ---
 
+## Sponsor tracks
+
+### PreStocks — a second token-extension problem, solved the same way
+
+Everything above composes xStocks. Tessera also composes **PreStocks**
+(`prestocks.com`) — Token-2022 SPVs over pre-IPO companies: Anthropic, OpenAI,
+SpaceX, Anduril, Figure AI, Kalshi, Neuralink, Polymarket. Real mainnet mints,
+real Jupiter liquidity, listed at `web/lib/prestocks.ts`.
+
+Several of these mints carry a `TransferFeeConfig` extension no xStock has:
+every transfer skims a fee at the token-program level. A recipe that deposits
+the raw amount it wants the vault to hold would under-back it by exactly that
+fee — silently, the same shape of bug `ScaledUiAmountConfig` forces you to
+avoid on the xStock side, one extension over. `gross_for_transfer_fee` in
+`programs/tessera/src/lib.rs` reads the mint's live fee schedule at deposit
+time and grosses up so the vault nets exactly the recipe amount; redemption is
+unchanged, since the fee coming out of what leaves the vault doesn't touch
+what backs anyone else's share. Covered by the ninth test, and verified live:
+
+- **Basket:** `5Z8XUzGVJjcYPxPZ6Hfxx8uJRNKibFcmZd7yStuSPr1p` — "Frontier Labs",
+  four PreStocks components, devnet.
+- **Creation tx:** `4jNTjhUgbGUu1eLhCXZmZrzZ8H9Mr1UXJH1stbSw1GVopVM22rdet7xHT5BTWhG6NHYtdoHn3LgHoyppkBAsBbkz`
+- On chain right now: the ANTHROPIC vault holds `513564189` raw units with
+  `2580725` withheld as fee by the token program — a ratio of exactly 50 bps
+  of the gross amount, computed by Token-2022 itself, not by Tessera.
+
+`scripts/setup-mirror-prestocks.mjs` mirrors the eight mints onto the write
+cluster, transfer fee included, the way `setup-mirror.mjs` already does for
+xStocks. `/compose`, `/portfolio`, and the basket page all treat a PreStock as
+an ordinary component once it has a mirror — see `asXStock` in
+`web/lib/prestocks.ts`.
+
+### Meteora DBC — a primary market for a basket that has none yet
+
+A brand-new basket has zero shares and no liquidity, and nobody wants to be the
+first person to assemble eight components on faith. `scripts/dbc-launch.mjs`
+opens a Meteora Dynamic Bonding Curve pool as a front-market for a real
+Tessera basket, on the real DBC program (`dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN`
+— identical address on devnet and mainnet), configured from that basket's own
+numbers rather than round ones:
+
+- **`initialMarketCap` / `migrationMarketCap`** are set at 0.5x and 20x the
+  basket's own stated NAV per share, converted to SOL at Jupiter's live
+  SOL/USD price at launch time — the curve opens and graduates around a
+  number Tessera already computes, not an arbitrary one.
+- **`tokenAuthorityOption: Immutable`** — the base mint gets no upgrade path,
+  the same reason a Tessera share mint has no freeze authority.
+- **Fee scheduler decays 4% → 1% over the first hour** — anti-snipe at the
+  open, settling at a rate still cheaper than assembling eight components
+  through Jupiter (`0.17-0.26%` on **the last mile**, this pool's 1% floor is
+  the cost of not having to).
+- **Migrated liquidity is 100% permanently locked**, split evenly
+  partner/creator — nobody can withdraw it later, by construction, the same
+  shape of guarantee as a Tessera vault having no withdrawal instruction a
+  creator can call.
+
+Verified live on devnet, quoted in SOL, for the "Frontier Labs" PreStocks
+basket above:
+
+- **Config:** `DqxXAWXXqurghukxhZmtridTj1nBobJSHG5aSBeYD5nu`
+- **Pool:** `DAZdm2LmiDCfVQaAuVkKdK5Qa1hWmkV1fNK6SzGikqFU`
+- **Base token (Token-2022):** `4A1rSrw6PoAVHg1AUfYfxs9nQzbF2ptY86caUuoJsULV` — "Frontier Labs, early access", FRNTRA
+- **Creation tx:** `3MDHtKoBXMSmrvhAXoCGXcnS32ekQy6x5udLhyKmE3xAXEe6xLZEv5a6XFZBmmEDiaYDKmgybQ1fp9mEcua1MMgb`
+- **A real buy against it:** `38KaZPY3tSVWxtk3xX9PkAqDqeubzAYXTV24hqNkGhuC59wQKBC4yXfZeRTS65tCa2Z2LgTtWaHg7QagfjzUxAni` — 0.01 SOL in, ~4.1M of the 990M curve-side supply out, at the open of the curve.
+
+This pool's token is a separate asset from a Tessera share, not a redemption
+right — linking the two (so the pool migrating funds the basket's own first
+creation) is the natural next step, not yet built.
+
+---
+
 ## The program
 
 `programs/tessera/src/lib.rs`, Anchor 0.31.1. Program ID
@@ -154,14 +225,16 @@ $ pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 'tests/**/*.ts'
     ✔ hands the components back on redemption
     ✔ rejects a vault that is not the basket's own token account
     ✔ is unmoved by a dividend accruing into a component's multiplier
+    ✔ grosses up a deposit so a transfer-fee component still nets the recipe amount
     ✔ still fully backs every share after all that
 
-  9 passing
+  10 passing
 ```
 
-The eighth test is the one that matters most: it raises a component's
-`ScaledUiAmountConfig` multiplier mid-test and asserts that mint and redeem
-amounts in raw units are unchanged.
+The eighth test is the one that matters most for xStocks: it raises a
+component's `ScaledUiAmountConfig` multiplier mid-test and asserts that mint
+and redeem amounts in raw units are unchanged. The ninth is its counterpart for
+PreStocks components, below.
 
 ---
 
@@ -270,9 +343,12 @@ pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 'tests/**/*.ts'
 
 ```
 programs/tessera/src/lib.rs   the program: create, mint, redeem
-tests/tessera.ts              9 integration tests, including the dividend case
-scripts/setup-mirror.mjs      creates the mirror mints, writes mirror.generated.ts
+tests/tessera.ts              10 integration tests, including the dividend and fee cases
+web/lib/prestocks.ts          the 8 PreStocks pre-IPO mints
+scripts/setup-mirror.mjs      creates the xStock mirror mints, writes mirror.generated.ts
+scripts/setup-mirror-prestocks.mjs   the same, for PreStocks, transfer fee included
 scripts/seed-baskets.mjs      a few baskets to look at
+scripts/dbc-launch.mjs        opens a Meteora DBC pool sized from a basket's own NAV
 scripts/split-faucet-key.mjs  moves mint authority off the deploy wallet
 scripts/lib/rpc.mjs           what is safe to retry against a throttled endpoint
 scripts/lib/color.mjs         OKLCH, colour-vision simulation, palette checks

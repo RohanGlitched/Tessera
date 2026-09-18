@@ -35,6 +35,8 @@ import {
   AuthorityType,
   tokenMetadataInitializeWithRentTransfer,
   getScaledUiAmountConfig,
+  createInitializeTransferFeeConfigInstruction,
+  getTransferFeeAmount,
 } from "@solana/spl-token";
 import { assert } from "chai";
 import type { Tessera } from "../target/types/tessera";
@@ -609,6 +611,124 @@ describe("tessera", () => {
       "raw redemption is untouched by the multiplier",
     );
     assert.isAbove(1.05, beforeMultiplier, "the multiplier really did rise");
+  });
+
+  // PreStocks tokens carry a TransferFeeConfig extension xStocks do not: every
+  // transfer skims a fee at the token-program level. A deposit has to gross up
+  // for that fee, or the vault ends up backing shares by less than the recipe.
+  async function createFeeComponentMint(feeBps: number) {
+    const mint = Keypair.generate();
+    const space = getMintLen([ExtensionType.TransferFeeConfig]);
+    const lamports = await provider.connection.getMinimumBalanceForRentExemption(space);
+    const tx = new Transaction().add(
+      SystemProgram.createAccount({
+        fromPubkey: payer.publicKey,
+        newAccountPubkey: mint.publicKey,
+        space,
+        lamports,
+        programId: TOKEN_2022_PROGRAM_ID,
+      }),
+      createInitializeTransferFeeConfigInstruction(
+        mint.publicKey,
+        payer.publicKey,
+        payer.publicKey,
+        feeBps,
+        BigInt("18446744073709551615"), // uncapped, same as a live PreStocks mint
+        TOKEN_2022_PROGRAM_ID,
+      ),
+      createInitializeMint2Instruction(mint.publicKey, 9, payer.publicKey, null, TOKEN_2022_PROGRAM_ID),
+    );
+    await sendAndConfirmTransaction(provider.connection, tx, [payer, mint]);
+    return mint.publicKey;
+  }
+
+  it("grosses up a deposit so a transfer-fee component still nets the recipe amount", async () => {
+    const FEE_BPS = 50; // matches the live PreStocks fee
+    const feeMint = await createFeeComponentMint(FEE_BPS);
+    const unitsPerShareFee = new anchor.BN(1_000_000_000); // 1 whole token, 9 decimals
+
+    const symbol = "FEE1";
+    const pda = basketPda(payer.publicKey, symbol);
+    const mint = await createShareMint(pda, "Fee Component Basket", symbol);
+    await program.methods
+      .createBasket("Fee Component Basket", symbol, 0, [
+        { mint: feeMint, unitsPerShare: unitsPerShareFee, weightBps: 10000 },
+      ])
+      .accountsPartial({
+        creator: payer.publicKey,
+        basket: pda,
+        shareMint: mint,
+        componentTokenProgram: TOKEN_2022_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      })
+      .remainingAccounts([{ pubkey: feeMint, isSigner: false, isWritable: false }])
+      .rpc();
+
+    const feeHolder = Keypair.generate();
+    await provider.connection.confirmTransaction(
+      await provider.connection.requestAirdrop(feeHolder.publicKey, 2_000_000_000),
+    );
+    const holderAta = await fundHolder(feeMint, feeHolder.publicKey, 10n * 10n ** 9n);
+    const holderShareAta = getAssociatedTokenAddressSync(mint, feeHolder.publicKey, true, TOKEN_2022_PROGRAM_ID);
+    const vault = vaultFor(pda, feeMint);
+    await sendAndConfirmTransaction(
+      provider.connection,
+      new Transaction().add(
+        createAssociatedTokenAccountIdempotentInstruction(
+          payer.publicKey,
+          holderShareAta,
+          feeHolder.publicKey,
+          mint,
+          TOKEN_2022_PROGRAM_ID,
+        ),
+        createAssociatedTokenAccountIdempotentInstruction(
+          payer.publicKey,
+          vault,
+          pda,
+          feeMint,
+          TOKEN_2022_PROGRAM_ID,
+        ),
+      ),
+      [payer],
+    );
+
+    const before = await rawBalance(holderAta);
+    await program.methods
+      .mintShares(new anchor.BN(ONE_SHARE))
+      .accountsPartial({
+        basket: pda,
+        shareMint: mint,
+        depositor: feeHolder.publicKey,
+        depositorShareAccount: holderShareAta,
+        // No creator fee on this basket, so the program never touches this
+        // account — but Anchor's client-side validation still wants one named.
+        creatorShareAccount: holderShareAta,
+        shareTokenProgram: TOKEN_2022_PROGRAM_ID,
+        componentTokenProgram: TOKEN_2022_PROGRAM_ID,
+      })
+      .remainingAccounts([
+        { pubkey: feeMint, isSigner: false, isWritable: false },
+        { pubkey: holderAta, isSigner: false, isWritable: true },
+        { pubkey: vault, isSigner: false, isWritable: true },
+      ])
+      .signers([feeHolder])
+      .rpc();
+
+    const vaultBalance = await rawBalance(vault);
+    assert.equal(
+      vaultBalance.toString(),
+      unitsPerShareFee.toString(),
+      "the vault nets exactly the recipe amount despite the transfer fee",
+    );
+
+    const vaultAccount = await getAccount(provider.connection, vault, undefined, TOKEN_2022_PROGRAM_ID);
+    const withheld = getTransferFeeAmount(vaultAccount)?.withheldAmount ?? 0n;
+    const after = await rawBalance(holderAta);
+    assert.equal(
+      (before - after).toString(),
+      (vaultBalance + withheld).toString(),
+      "the holder paid the recipe amount plus exactly the fee the token program withheld",
+    );
   });
 
   it("still fully backs every share after all that", async () => {

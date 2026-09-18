@@ -13,8 +13,7 @@ import {
 } from "@solana/spl-token";
 import bs58 from "bs58";
 import { WRITE_RPC, WRITE_CLUSTER } from "@/lib/config";
-import { MIRROR, type MirrorEntry } from "@/lib/mirror.generated";
-import { FAUCET_TOKENS_PER_CLAIM } from "@/lib/mirror";
+import { COMPOSABLE, FAUCET_TOKENS_PER_CLAIM, writeMint } from "@/lib/mirror";
 
 /**
  * Test shares, on request.
@@ -29,6 +28,8 @@ import { FAUCET_TOKENS_PER_CLAIM } from "@/lib/mirror";
 
 const COOLDOWN_MS = 60_000;
 const MAX_TICKERS_PER_REQUEST = 8;
+
+const DECIMALS_BY_SYMBOL = new Map(COMPOSABLE.map((s) => [s.symbol, s.decimals]));
 
 /** Last claim per address. Per-instance and deliberately simple. */
 const lastClaim = new Map<string, number>();
@@ -85,9 +86,13 @@ export async function POST(request: Request) {
   }
 
   const requested = (body.symbols ?? []).slice(0, MAX_TICKERS_PER_REQUEST);
-  const entries: [string, MirrorEntry][] = requested
-    .map((s) => [s, MIRROR[s]] as [string, MirrorEntry | undefined])
-    .filter((pair): pair is [string, MirrorEntry] => Boolean(pair[1]));
+  const entries: { symbol: string; mint: string; decimals: number }[] = requested
+    .map((symbol) => {
+      const mint = writeMint(symbol);
+      const decimals = DECIMALS_BY_SYMBOL.get(symbol);
+      return mint && decimals != null ? { symbol, mint, decimals } : null;
+    })
+    .filter((e): e is { symbol: string; mint: string; decimals: number } => e != null);
 
   if (!entries.length) {
     return Response.json(
@@ -97,11 +102,11 @@ export async function POST(request: Request) {
   }
 
   const connection = new Connection(WRITE_RPC, "confirmed");
-  const amount = BigInt(FAUCET_TOKENS_PER_CLAIM) * 10n ** 8n;
 
   const tx = new Transaction();
-  for (const [, entry] of entries) {
-    const mint = new PublicKey(entry.writeMint);
+  for (const entry of entries) {
+    const mint = new PublicKey(entry.mint);
+    const amount = BigInt(FAUCET_TOKENS_PER_CLAIM) * 10n ** BigInt(entry.decimals);
     const ata = getAssociatedTokenAddressSync(
       mint,
       owner,
@@ -136,7 +141,7 @@ export async function POST(request: Request) {
       signature,
       cluster: WRITE_CLUSTER,
       tokensEach: FAUCET_TOKENS_PER_CLAIM,
-      symbols: entries.map(([symbol]) => symbol),
+      symbols: entries.map((e) => e.symbol),
     });
   } catch (err) {
     // Never echo the error verbatim: a failed send can quote instruction data.

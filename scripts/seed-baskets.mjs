@@ -98,7 +98,22 @@ const XSTOCKS = readLiteral(
   path.join(ROOT, "web/lib/universe.ts"),
   "export const XSTOCKS: XStock[] = ",
 );
-const BY_SYMBOL = new Map(XSTOCKS.map((s) => [s.symbol, s]));
+const PRESTOCKS = readLiteral(
+  path.join(ROOT, "web/lib/prestocks.ts"),
+  "export const PRESTOCKS: PreStock[] = ",
+);
+const PRESTOCKS_MIRROR = readLiteral(
+  path.join(ROOT, "web/lib/mirror-prestocks.generated.ts"),
+  "export const PRESTOCKS_MIRROR: Record<string, PreStockMirrorEntry> = ",
+);
+
+// xStocks and PreStocks, merged by symbol. A recipe names either kind the same
+// way; only the mint each one settles against on the write cluster differs.
+const BY_SYMBOL = new Map([
+  ...XSTOCKS.map((s) => [s.symbol, s]),
+  ...PRESTOCKS.map((s) => [s.symbol, s]),
+]);
+const ALL_MIRROR = { ...MIRROR, ...PRESTOCKS_MIRROR };
 
 const idl = JSON.parse(
   fs.readFileSync(path.join(ROOT, "target/idl/tessera.json"), "utf8"),
@@ -145,6 +160,21 @@ const RECIPES = [
       ["SPYx", 5000],
       ["QQQx", 3500],
       ["GLDx", 1500],
+    ],
+  },
+  {
+    name: "Frontier Labs",
+    symbol: "FRNTR",
+    feeBps: 75,
+    sharePrice: 500,
+    shares: 3,
+    // PreStocks pre-IPO tokens, not xStocks. ANTHROPIC and OPENAI carry a live
+    // transfer fee, which is exactly what the gross-up in mint_shares is for.
+    components: [
+      ["ANTHROPIC", 3500],
+      ["OPENAI", 3000],
+      ["SPACEX", 2000],
+      ["ANDURIL", 1500],
     ],
   },
 ];
@@ -245,9 +275,11 @@ if (balance < 0.5e9) {
 const allSymbols = [
   ...new Set(RECIPES.flatMap((r) => r.components.map(([s]) => s))),
 ];
-const missing = allSymbols.filter((s) => !MIRROR[s]);
+const missing = allSymbols.filter((s) => !ALL_MIRROR[s]);
 if (missing.length) {
-  console.error(`No mirror mint for ${missing.join(", ")}. Run setup-mirror first.`);
+  console.error(
+    `No mirror mint for ${missing.join(", ")}. Run setup-mirror / setup-mirror-prestocks first.`,
+  );
   process.exit(1);
 }
 
@@ -341,7 +373,7 @@ for (const recipe of RECIPES) {
   const existing = await connection.getAccountInfo(basket);
 
   const components = recipe.components.map(([symbol, weightBps]) => {
-    const entry = MIRROR[symbol];
+    const entry = ALL_MIRROR[symbol];
     const quote = quotes.get(symbol);
     const decimals = BY_SYMBOL.get(symbol).decimals;
     const dollars = (recipe.sharePrice * weightBps) / 10_000;

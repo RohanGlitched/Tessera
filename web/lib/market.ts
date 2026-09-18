@@ -19,6 +19,7 @@
  */
 
 import { XSTOCKS, BY_MINT, type XStock } from "./universe";
+import { PRESTOCKS, asXStock } from "./prestocks";
 
 const JUP_PRICE = "https://lite-api.jup.ag/price/v3";
 const JUP_SEARCH = "https://lite-api.jup.ag/tokens/v2/search";
@@ -110,7 +111,10 @@ export type MarketSnapshot = {
   missing: string[];
 };
 
-const mints = XSTOCKS.map((s) => s.mint);
+// Public equities and pre-IPO SPV tokens, priced the same way: both are real
+// mints with real Jupiter liquidity, and neither is a fixture.
+const UNIVERSE: XStock[] = [...XSTOCKS, ...PRESTOCKS.map(asXStock)];
+const mints = UNIVERSE.map((s) => s.mint);
 
 async function getJson<T>(url: string): Promise<T | null> {
   try {
@@ -208,7 +212,7 @@ export async function fetchMarket(): Promise<MarketSnapshot> {
 
   const quotes: Quote[] = [];
   const missing: string[] = [];
-  for (const stock of XSTOCKS) {
+  for (const stock of UNIVERSE) {
     const q = buildQuote(stock, prices?.[stock.mint], byId.get(stock.mint));
     if (q) quotes.push(q);
     else missing.push(stock.symbol);

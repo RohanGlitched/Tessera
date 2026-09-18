@@ -31,6 +31,7 @@ web/next-env.d.ts
 
 # Local mirror addresses, rewritten by scripts/setup-mirror.mjs per cluster.
 .mirror-state.json
+.mirror-state-prestocks.json
 
 .DS_Store
 
@@ -45,3 +46,5 @@ web/CLAUDE.md
 # Submission prep: form copy, the shot list for the demo, and rubric notes.
 # Useful locally, not part of the project.
 SUBMISSION.md
+TECHNICAL-VIDEO.md
+PITCH-VIDEO.md
