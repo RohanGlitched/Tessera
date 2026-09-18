@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useBaskets } from "@/lib/use-baskets";
 import { BasketCard } from "./basket-card";
-import { WRITE_CLUSTER } from "@/lib/config";
 
 export function FeaturedBaskets() {
   const { baskets, error, loading } = useBaskets();
@@ -14,7 +13,7 @@ export function FeaturedBaskets() {
         <div>
           <h2 className="display text-title text-ivory">Laid so far</h2>
           <p className="mt-2 text-sm text-ivory-dim">
-            Every basket on {WRITE_CLUSTER}, read straight from the program.
+            Every basket, read straight from the program.
           </p>
         </div>
         <Link

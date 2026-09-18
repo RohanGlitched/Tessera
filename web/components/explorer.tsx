@@ -6,7 +6,6 @@ import { useBaskets } from "@/lib/use-baskets";
 import { useMarket } from "./market-provider";
 import { valueBasket } from "@/lib/basket-view";
 import { BasketCard } from "./basket-card";
-import { WRITE_CLUSTER } from "@/lib/config";
 import { count, money } from "@/lib/format";
 
 /**
@@ -85,7 +84,7 @@ export function Explorer() {
             Every basket
           </h1>
           <p className="mt-4 max-w-[54ch] text-base leading-relaxed text-ivory-dim">
-            Read from the program on {WRITE_CLUSTER}. Nothing here is listed,
+            Read straight from the program. Nothing here is listed,
             approved, or promoted. If somebody laid it, it is on this page.
           </p>
         </div>
