@@ -13,7 +13,8 @@ export default function Home() {
             An index fund is a list of companies and a set of weights.
           </h1>
           <p className="mt-7 max-w-[46ch] text-lg leading-relaxed text-ivory-dim">
-            Pick from twenty tokenised equities. Tessera mints your list as one
+            Pick from twenty tokenised equities, plus pre-IPO SPVs over OpenAI,
+            Anthropic and SpaceX via PreStocks. Tessera mints your list as one
             token, backed share for share in a vault anyone can read. Buyers hold
             a single position instead of eight. You earn a fee on every share
             created.

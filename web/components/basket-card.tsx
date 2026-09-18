@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useMemo } from "react";
 import type { Basket } from "@/lib/tessera";
 import { valueBasket } from "@/lib/basket-view";
+import { PRESTOCK_SYMBOLS } from "@/lib/prestocks";
+import { dbcPoolFor } from "@/lib/dbc";
 import { useMarket } from "./market-provider";
 import { BasketMosaic } from "./basket-mosaic";
 import { money, signedPercent, percent, count, shortAddress } from "@/lib/format";
@@ -22,6 +24,11 @@ export function BasketCard({ basket }: { basket: Basket }) {
     slot: c.slot,
   }));
 
+  const hasPreStocks = valuation.components.some((c) =>
+    PRESTOCK_SYMBOLS.has(c.symbol),
+  );
+  const dbc = dbcPoolFor(basket.address);
+
   return (
     <Link
       href={`/basket/${basket.address}`}
@@ -34,6 +41,14 @@ export function BasketCard({ basket }: { basket: Basket }) {
             {basket.symbol} · {basket.components.length} components · by{" "}
             {shortAddress(basket.creator)}
           </p>
+          {(hasPreStocks || dbc) && (
+            <p className="mt-1.5 flex gap-2 text-xs">
+              {hasPreStocks && (
+                <span className="text-ivory-faint">Includes PreStocks</span>
+              )}
+              {dbc && <span className="text-gold">Meteora DBC market</span>}
+            </p>
+          )}
         </div>
         <div className="shrink-0 text-right">
           <p className="tnum display text-lg text-ivory">

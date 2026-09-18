@@ -20,6 +20,8 @@ import {
   explainError,
 } from "@/lib/tx";
 import { symbolForWriteMint } from "@/lib/mirror";
+import { PRESTOCK_SYMBOLS, BY_SYMBOL_PRESTOCKS } from "@/lib/prestocks";
+import { dbcPoolFor } from "@/lib/dbc";
 import { explorerAddress, explorerTx } from "@/lib/config";
 import { slotColor } from "@/lib/palette";
 import {
@@ -260,6 +262,8 @@ function Loaded({
       </div>
       </div>
 
+      <DbcPanel basketAddress={basket.address} symbol={basket.symbol} />
+
       {/* What it should hold, beside what it does hold. `min-w-0` on the tracks,
           because a grid item defaults to min-content and the tables inside carry a
           minimum width — without it the whole page scrolls sideways. */}
@@ -291,6 +295,69 @@ function Loaded({
         </div>
       </div>
     </div>
+  );
+}
+
+// --------------------------------------------------------------------- DBC
+
+/**
+ * This basket also has a primary market on Meteora's Dynamic Bonding Curve —
+ * a separate token, not a redemption right, opened by scripts/dbc-launch.mjs
+ * and sized off this basket's own NAV rather than round numbers. Shown only
+ * for the one basket it exists for; see web/lib/dbc.ts.
+ */
+function DbcPanel({
+  basketAddress,
+  symbol,
+}: {
+  basketAddress: string;
+  symbol: string;
+}) {
+  const pool = dbcPoolFor(basketAddress);
+  if (!pool) return null;
+
+  return (
+    <section className="mt-12 border border-gold/40 bg-ground-raised px-6 py-6">
+      <p className="text-xs tracking-wide text-gold">Meteora DBC</p>
+      <h2 className="display mt-2 text-xl text-ivory">
+        This basket has an early-access market
+      </h2>
+      <p className="mt-3 max-w-[62ch] text-sm leading-relaxed text-ivory-dim">
+        {pool.baseSymbol} trades against {pool.quoteSymbol} on a Dynamic
+        Bonding Curve pool, opened by Tessera and sized off this basket&rsquo;s
+        own NAV — the curve&rsquo;s opening and migration market caps are set
+        at a multiple of {symbol}&rsquo;s stated value in {pool.quoteSymbol},
+        not a round number picked out of the air. It is a separate token, not
+        a redemption right into {symbol}: buying it is a bet on the basket
+        without first assembling every component.
+      </p>
+      <p className="tnum mt-4 flex flex-wrap gap-x-6 gap-y-1 text-xs text-ivory-faint">
+        <a
+          href={explorerAddress(pool.pool)}
+          target="_blank"
+          rel="noreferrer"
+          className="underline decoration-rule-bright underline-offset-4 hover:text-ivory-dim"
+        >
+          Pool {shortAddress(pool.pool, 6, 6)}
+        </a>
+        <a
+          href={explorerAddress(pool.config)}
+          target="_blank"
+          rel="noreferrer"
+          className="underline decoration-rule-bright underline-offset-4 hover:text-ivory-dim"
+        >
+          Config {shortAddress(pool.config, 6, 6)}
+        </a>
+        <a
+          href={explorerAddress(pool.baseMint)}
+          target="_blank"
+          rel="noreferrer"
+          className="underline decoration-rule-bright underline-offset-4 hover:text-ivory-dim"
+        >
+          {pool.baseSymbol} mint {shortAddress(pool.baseMint, 6, 6)}
+        </a>
+      </p>
+    </section>
   );
 }
 
@@ -342,6 +409,11 @@ function Composition({
                     />
                     <span>
                       <span className="text-ivory">{c.base}</span>
+                      {PRESTOCK_SYMBOLS.has(c.symbol) && (
+                        <span className="ml-2 text-xs text-ivory-faint">
+                          PreStocks
+                        </span>
+                      )}
                       <span className="ml-2 hidden text-xs text-ivory-faint sm:inline">
                         {c.company}
                       </span>
@@ -472,6 +544,11 @@ function Backing({
                     >
                       <td className="px-3 py-3 text-ivory sm:px-4">
                         {label.replace(/x$/, "")}
+                        {PRESTOCK_SYMBOLS.has(label) && (
+                          <span className="ml-2 text-xs text-ivory-faint">
+                            PreStocks
+                          </span>
+                        )}
                       </td>
                       <td className="tnum px-3 py-3 text-right text-ivory-dim sm:px-4">
                         {quantity(Number(vault.held) / 10 ** decimals, 6)}
@@ -536,16 +613,25 @@ function TradePanel({
   const rawShares = valid ? BigInt(Math.round(shares * ONE_SHARE)) : 0n;
 
   const rows = basket.components.map((component) => {
-    const need = mulDivCeil(component.unitsPerShare, rawShares, ONE);
+    const symbol = symbolForWriteMint(component.mint) ?? "?";
+    const target = mulDivCeil(component.unitsPerShare, rawShares, ONE);
+    // The program grosses up a deposit for a live TransferFeeConfig, same as
+    // gross_for_transfer_fee in lib.rs, so a PreStocks component costs
+    // slightly more than the recipe alone would suggest. Estimated from the
+    // fee this component quoted at seeding time, not a live read, so it can
+    // undershoot by a few raw units if the fee has since changed on chain.
+    const feeBps = BY_SYMBOL_PRESTOCKS[symbol]?.transferFeeBps ?? 0;
+    const need = feeBps > 0 ? mulDivCeil(target, 10_000n, 10_000n - BigInt(feeBps)) : target;
     const back = mulDivFloor(component.unitsPerShare, rawShares, ONE);
     const have = balances.raw.get(component.mint) ?? 0n;
     return {
       mint: component.mint,
-      symbol: symbolForWriteMint(component.mint) ?? "?",
+      symbol,
       decimals: component.decimals,
       need,
       back,
       have,
+      grossedUp: feeBps > 0,
       short: have < need,
     };
   });
@@ -677,6 +763,14 @@ function TradePanel({
                 >
                   <span className="text-ivory-dim">
                     {row.symbol.replace(/x$/, "")}
+                    {mode === "create" && row.grossedUp && (
+                      <span
+                        className="ml-1.5 text-xs text-ivory-faint"
+                        title="PreStocks charges a transfer fee; the program grosses up the deposit so the vault still nets the recipe amount."
+                      >
+                        +fee
+                      </span>
+                    )}
                   </span>
                   <span className="flex items-baseline gap-2">
                     <span className="text-ivory">

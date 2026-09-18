@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { squarify, fitsTile } from "@/lib/treemap";
-import { changeColor, CHANGE_LEGEND, CHART_SURFACE } from "@/lib/palette";
+import { changeColor, CHANGE_LEGEND, CHART_SURFACE, COMPONENT_SLOTS } from "@/lib/palette";
 import {
   money,
   moneyCompact,
@@ -12,6 +12,7 @@ import {
 } from "@/lib/format";
 import type { Quote } from "@/lib/market";
 import { useMeasure } from "@/lib/use-measure";
+import { PRESTOCK_SYMBOLS } from "@/lib/prestocks";
 
 export type SizeBy = "liquidity" | "volume24h";
 
@@ -86,10 +87,16 @@ export function MarketMosaic({
         <figcaption className="mb-3 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 className="display text-xl text-ivory">
-              Twenty tokenised equities, live on Solana
+              Tokenised equities and pre-IPO SPVs, live on Solana
             </h2>
             <p className="mt-1 text-sm text-ivory-dim">
-              Tile area is {SIZE_LABEL[size]}. Colour is the 24-hour move.
+              Tile area is {SIZE_LABEL[size]}. Colour is the 24-hour move. The{" "}
+              <span
+                className="inline-block size-2 rounded-full align-[-1px]"
+                style={{ background: COMPONENT_SLOTS[3] }}
+                aria-hidden
+              />{" "}
+              mark is PreStocks — a pre-IPO SPV, not a listed company.
             </p>
           </div>
           <div className="flex items-center gap-1 text-xs">
@@ -216,6 +223,18 @@ export function MarketMosaic({
                         fill="var(--color-gold)"
                       />
                     )}
+                    {PRESTOCK_SYMBOLS.has(q.symbol) &&
+                      tile.width > 40 &&
+                      tile.height > 40 && (
+                        // A PreStocks pre-IPO token, not a public xStock equity.
+                        <rect
+                          x={tile.x + 5}
+                          y={tile.y + 5}
+                          width={4}
+                          height={4}
+                          fill={COMPONENT_SLOTS[3]}
+                        />
+                      )}
                     {roomForLabel && (
                       <text
                         x={tile.x + 9}
@@ -327,18 +346,24 @@ function TileTooltip({
       </div>
 
       <dl className="mt-4 space-y-1.5 text-xs">
-        <Row
-          label={`${quote.base} on Nasdaq`}
-          value={money(quote.sharePrice)}
-        />
-        <Row
-          label="Token vs share"
-          value={
-            quote.premiumBps == null
-              ? "—"
-              : `${quote.premiumBps > 0 ? "+" : "−"}${Math.abs(quote.premiumBps / 100).toFixed(2)}%`
-          }
-        />
+        {PRESTOCK_SYMBOLS.has(quote.symbol) ? (
+          <Row label="Source" value="PreStocks · pre-IPO SPV" gold={false} lapis />
+        ) : (
+          <>
+            <Row
+              label={`${quote.base} on Nasdaq`}
+              value={money(quote.sharePrice)}
+            />
+            <Row
+              label="Token vs share"
+              value={
+                quote.premiumBps == null
+                  ? "—"
+                  : `${quote.premiumBps > 0 ? "+" : "−"}${Math.abs(quote.premiumBps / 100).toFixed(2)}%`
+              }
+            />
+          </>
+        )}
         <Row label="Liquidity" value={moneyCompact(quote.liquidity)} />
         <Row label="24h volume" value={moneyCompact(quote.volume24h)} />
         <Row label="Holders" value={count(quote.holders)} />
@@ -358,15 +383,22 @@ function Row({
   label,
   value,
   gold = false,
+  lapis = false,
 }: {
   label: string;
   value: string;
   gold?: boolean;
+  lapis?: boolean;
 }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <dt className="text-ivory-faint">{label}</dt>
-      <dd className={`tnum ${gold ? "text-gold" : "text-ivory-dim"}`}>{value}</dd>
+      <dd
+        className={`tnum ${gold ? "text-gold" : "text-ivory-dim"}`}
+        style={lapis ? { color: COMPONENT_SLOTS[3] } : undefined}
+      >
+        {value}
+      </dd>
     </div>
   );
 }
@@ -389,6 +421,14 @@ export function ChangeLegend() {
       <div className="flex items-center gap-1.5">
         <span className="size-1.5 bg-gold" aria-hidden />
         <span>pays a dividend into its multiplier</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span
+          className="size-1.5"
+          style={{ background: COMPONENT_SLOTS[3] }}
+          aria-hidden
+        />
+        <span>PreStocks — pre-IPO SPV, not a public equity</span>
       </div>
     </div>
   );

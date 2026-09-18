@@ -12,6 +12,7 @@ import { slotColor } from "@/lib/palette";
 import { money, percent, moneyCompact, quantity, signedPercent } from "@/lib/format";
 import { equalWeights, proportionalWeights, setWeight, WEIGHT_TOTAL } from "@/lib/weights";
 import { COMPOSABLE, writeMint } from "@/lib/mirror";
+import { PRESTOCK_SYMBOLS } from "@/lib/prestocks";
 import { unitsForWeights } from "@/lib/tessera";
 import { buildCreateBasket, sendSteps, explainError } from "@/lib/tx";
 import { MAX_COMPONENTS, MAX_CREATOR_FEE_BPS, explorerTx } from "@/lib/config";
@@ -51,6 +52,12 @@ const PRESETS: Preset[] = [
     label: "Dividend payers",
     hint: "Only tickers already accruing dividends on chain",
     symbols: [],
+  },
+  {
+    id: "frontier",
+    label: "Frontier Labs",
+    hint: "Pre-IPO SPVs from PreStocks — Anthropic, OpenAI, SpaceX, Anduril",
+    symbols: ["ANTHROPIC", "OPENAI", "SPACEX", "ANDURIL"],
   },
 ];
 
@@ -160,7 +167,9 @@ export function Composer() {
         ? "TESSY"
         : preset.id === "mag"
           ? "BIG5"
-          : "BTCPX",
+          : preset.id === "frontier"
+            ? "FRNTR"
+            : "BTCPX",
     );
     setError(null);
   }
@@ -359,7 +368,8 @@ export function Composer() {
         <p className="mt-4 max-w-[56ch] text-base leading-relaxed text-ivory-dim">
           Click a tile to put that company in the basket, then set the weights
           beside it. Up to {MAX_COMPONENTS} components, and every one of them is
-          a token already trading on Solana.
+          a token already trading on Solana — public equities as xStocks, and
+          pre-IPO companies as PreStocks, composed the same way.
         </p>
 
         <div className="mt-7 flex flex-wrap gap-2">
@@ -533,6 +543,11 @@ export function Composer() {
                         <span className="text-sm text-ivory">
                           {row.stock.base}
                         </span>
+                        {PRESTOCK_SYMBOLS.has(row.stock.symbol) && (
+                          <span className="text-xs text-ivory-faint">
+                            PreStocks
+                          </span>
+                        )}
                         <span className="truncate text-xs text-ivory-faint">
                           {row.stock.company}
                         </span>

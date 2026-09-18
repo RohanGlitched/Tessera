@@ -101,6 +101,10 @@ export const BY_MINT_PRESTOCKS: Record<string, PreStock> = Object.fromEntries(
   PRESTOCKS.map((s) => [s.mint, s]),
 );
 
+/** Cheap membership check, so any component elsewhere in the app can tell a
+ *  PreStocks pre-IPO token from an xStock without importing the full list. */
+export const PRESTOCK_SYMBOLS: Set<string> = new Set(PRESTOCKS.map((s) => s.symbol));
+
 /**
  * A PreStock, in the shape the rest of the app already knows how to price and
  * display. There is no real listed share behind these, so the feed and

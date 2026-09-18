@@ -8,6 +8,7 @@ import {
   WRITE_CLUSTER,
   explorerAddress,
 } from "@/lib/config";
+import { DBC_POOLS } from "@/lib/dbc";
 
 export const metadata: Metadata = {
   title: "How it works",
@@ -222,6 +223,56 @@ export default function MethodPage() {
                 {TESSERA_PROGRAM_ID}
               </a>
             </p>
+          </Section>
+
+          <Section heading="PreStocks and Meteora, composed rather than bolted on">
+            <p>
+              <span className="text-ivory">PreStocks</span> issues Token-2022
+              SPVs over pre-IPO companies — Anthropic, OpenAI, SpaceX and
+              others. Several of those mints carry a{" "}
+              <code className="text-ivory">TransferFeeConfig</code> extension
+              no xStock has: every transfer skims a fee at the token-program
+              level. Left alone, a recipe that deposits the raw amount it
+              wants held would under-back the vault by exactly that fee,
+              silently. <code className="text-ivory">mint_shares</code> now
+              reads the mint&rsquo;s live fee schedule and grosses up the
+              deposit so the vault still nets the recipe amount — the same
+              discipline the scaled UI multiplier already forced on xStocks,
+              one extension over. Look for the{" "}
+              <span className="text-ivory-faint">PreStocks</span> tag on any
+              basket that composes one, and the{" "}
+              <span className="tnum">+fee</span> mark on the create panel when
+              it applies.
+            </p>
+            <p>
+              <span className="text-ivory">Meteora&rsquo;s Dynamic Bonding
+              Curve</span> gives a brand-new basket a primary market before it
+              has one. A pool is a separate token, not a redemption right, but
+              it is configured from the basket it stands in front of rather
+              than round numbers: opening and migration market caps are set at
+              a multiple of that basket&rsquo;s own stated NAV, converted to
+              SOL at the live price when the pool is opened. Open the one
+              basket that has one to see the panel and the addresses.
+            </p>
+            {Object.entries(DBC_POOLS).map(([basket, pool]) => (
+              <p key={basket} className="tnum text-sm text-ivory-faint">
+                <Link
+                  href={`/basket/${basket}`}
+                  className="underline decoration-rule-bright underline-offset-4 hover:text-ivory-dim"
+                >
+                  That basket
+                </Link>{" "}
+                · pool{" "}
+                <a
+                  href={explorerAddress(pool.pool)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="break-all underline decoration-rule-bright underline-offset-4 hover:text-ivory-dim"
+                >
+                  {pool.pool}
+                </a>
+              </p>
+            ))}
           </Section>
         </div>
 
