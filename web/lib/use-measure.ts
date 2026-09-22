@@ -1,22 +1,28 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
-/** Element width and height, tracked. Charts need real pixels, not guesses. */
+/**
+ * Element width and height, tracked. Charts need real pixels, not guesses.
+ *
+ * A callback ref rather than an object ref, so an element that unmounts and
+ * comes back (the mosaic behind its Table toggle) is observed again instead of
+ * leaving the size stuck at the zero reported when the old one detached.
+ */
 export function useMeasure<T extends HTMLElement>() {
-  const ref = useRef<T | null>(null);
+  const observer = useRef<ResizeObserver | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
 
-  useEffect(() => {
-    const node = ref.current;
+  const ref = useCallback((node: T | null) => {
+    observer.current?.disconnect();
+    observer.current = null;
     if (!node) return;
-    const observer = new ResizeObserver(([entry]) => {
+    observer.current = new ResizeObserver(([entry]) => {
       const box = entry.contentRect;
       setSize({ width: box.width, height: box.height });
     });
-    observer.observe(node);
+    observer.current.observe(node);
     setSize({ width: node.clientWidth, height: node.clientHeight });
-    return () => observer.disconnect();
   }, []);
 
   return { ref, ...size };
