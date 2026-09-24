@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMarket } from "./market-provider";
 import { MarketMosaic } from "./market-mosaic";
 import { moneyCompact, count, timeAgo } from "@/lib/format";
+import { PRESTOCK_SYMBOLS } from "@/lib/prestocks";
 
 export function HomeMosaic() {
   const { snapshot, loading, error, updatedAt } = useMarket();
@@ -61,6 +62,7 @@ export function HomeMosaic() {
 export function HomeStats() {
   const { snapshot } = useMarket();
   const quotes = snapshot?.quotes ?? [];
+  const prestocks = quotes.filter((q) => PRESTOCK_SYMBOLS.has(q.symbol)).length;
   const dividendPayers = quotes.filter((q) => q.paysDividend);
   const best = [...dividendPayers].sort(
     (a, b) => b.accruedYieldPct - a.accruedYieldPct,
@@ -71,9 +73,11 @@ export function HomeStats() {
 
   const stats: { label: string; value: string; note: string }[] = [
     {
-      label: "Equities you can compose",
+      label: "Tokens you can compose",
       value: quotes.length ? String(quotes.length) : "—",
-      note: "every one a Token-2022 mint on mainnet",
+      note: prestocks
+        ? `${quotes.length - prestocks} xStocks, ${prestocks} PreStocks, all live mints`
+        : "every one a Token-2022 mint on mainnet",
     },
     {
       label: "Components per basket",

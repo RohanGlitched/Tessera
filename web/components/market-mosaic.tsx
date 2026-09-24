@@ -351,7 +351,7 @@ function TileTooltip({
         ) : (
           <>
             <Row
-              label={`${quote.base} on Nasdaq`}
+              label="Listed share"
               value={money(quote.sharePrice)}
             />
             <Row
@@ -493,6 +493,8 @@ export function QuoteTable({ quotes }: { quotes: Quote[] }) {
               <td className="tnum px-4 py-2.5 text-right">
                 {q.paysDividend ? (
                   <span className="text-gold">+{percent(q.accruedYieldPct)}</span>
+                ) : PRESTOCK_SYMBOLS.has(q.symbol) ? (
+                  <span className="text-ivory-faint">pre-IPO</span>
                 ) : (
                   <span className="text-ivory-faint">none yet</span>
                 )}

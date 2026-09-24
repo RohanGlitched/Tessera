@@ -171,7 +171,8 @@ export default function MethodPage() {
               which the panel also shows.
             </p>
             <p>
-              The tokens themselves are issued by Backed Finance, not by us. Their
+              The tokens themselves are issued by Backed Finance (xStocks) and
+              PreStocks, not by us. Their
               transfer hooks, permanent delegate, and pause authority are theirs.
               Tessera does not remove counterparty risk in the tokenised equity; it
               removes counterparty risk in the wrapper around it.

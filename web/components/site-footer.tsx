@@ -42,9 +42,9 @@ export function SiteFooter() {
         </div>
 
         <p className="mt-10 border-t border-rule pt-6 text-xs leading-relaxed text-ivory-faint">
-          Not investment advice, and not an offer to sell anything. Tokenised
-          equities are issued by Backed Finance; Tessera neither issues nor
-          custodies them beyond the program vault a basket writes to.
+          Not investment advice, and not an offer to sell anything. xStocks are
+          issued by Backed Finance and PreStocks by PreStocks; Tessera neither
+          issues nor custodies them beyond the program vault a basket writes to.
         </p>
       </div>
     </footer>

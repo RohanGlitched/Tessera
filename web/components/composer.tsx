@@ -220,7 +220,7 @@ export function Composer() {
           (r.quote!.price * r.quote!.multiplier) / 10 ** r.stock.decimals;
         const value = Number(u.unitsPerShare) * perRawUnit;
         nav += value;
-        accrued += value * (1 - 1 / r.quote!.multiplier);
+        if (r.quote!.paysDividend) accrued += value * (1 - 1 / r.quote!.multiplier);
       });
     }
 

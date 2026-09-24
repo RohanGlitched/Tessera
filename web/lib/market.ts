@@ -19,7 +19,7 @@
  */
 
 import { XSTOCKS, BY_MINT, type XStock } from "./universe";
-import { PRESTOCKS, asXStock } from "./prestocks";
+import { PRESTOCKS, PRESTOCK_SYMBOLS, asXStock } from "./prestocks";
 
 const JUP_PRICE = "https://lite-api.jup.ag/price/v3";
 const JUP_SEARCH = "https://lite-api.jup.ag/tokens/v2/search";
@@ -166,8 +166,14 @@ function buildQuote(
   const usd = price?.usdPrice;
   if (usd == null || !Number.isFinite(usd) || usd <= 0) return null;
 
-  const share = price?.stockData?.price ?? null;
+  // A PreStock is a pre-IPO SPV. Jupiter's `stockData` for it is PreStocks' own
+  // mark on the private company, not a listed share anyone can arbitrage
+  // against, and its multiplier restates share ratios rather than paying
+  // dividends. The multiplier still values the token; neither reading is shown.
+  const prestock = PRESTOCK_SYMBOLS.has(stock.symbol);
+  const share = prestock ? null : (price?.stockData?.price ?? null);
   const mult = effectiveMultiplier(price?.scaledUiConfig);
+  const dividend = !prestock && mult.current > 1;
   const vol =
     token?.stats24h?.buyVolume != null || token?.stats24h?.sellVolume != null
       ? (token?.stats24h?.buyVolume ?? 0) + (token?.stats24h?.sellVolume ?? 0)
@@ -194,8 +200,8 @@ function buildQuote(
     multiplier: mult.current,
     nextMultiplier: mult.next,
     nextMultiplierAt: mult.nextAt,
-    accruedYieldPct: (mult.current - 1) * 100,
-    paysDividend: mult.current > 1,
+    accruedYieldPct: dividend ? (mult.current - 1) * 100 : 0,
+    paysDividend: dividend,
   };
 }
 

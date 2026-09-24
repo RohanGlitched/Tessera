@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PublicKey } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
@@ -50,6 +50,10 @@ const ONE = BigInt(ONE_SHARE);
 
 export function BasketDetail({ address }: { address: string }) {
   const { basket, state, error, reload } = useBasket(address);
+
+  useEffect(() => {
+    if (basket) document.title = `${basket.name} (${basket.symbol}) · Tessera`;
+  }, [basket]);
 
   if (state === "loading") {
     return (
@@ -205,7 +209,9 @@ function Loaded({
             }
             note={
               valuation.premiumBps == null
-                ? "Needs a listed price for every component"
+                ? valuation.components.some((c) => PRESTOCK_SYMBOLS.has(c.symbol))
+                  ? "Pre-IPO components have no listed share to compare"
+                  : "Needs a listed price for every component"
                 : valuation.premiumBps > 0
                   ? "The tokens trade above the shares behind them"
                   : "The tokens trade below the shares behind them"

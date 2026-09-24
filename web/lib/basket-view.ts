@@ -223,7 +223,10 @@ export function valueBasket(
     nav && nav > 0
       ? (components.reduce(
           (a, c) =>
-            a + (c.value ?? 0) * (1 - 1 / (c.quote?.multiplier ?? 1)),
+            a +
+            (c.quote?.paysDividend
+              ? (c.value ?? 0) * (1 - 1 / c.quote.multiplier)
+              : 0),
           0,
         ) /
           nav) *
