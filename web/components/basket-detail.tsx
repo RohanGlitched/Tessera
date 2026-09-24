@@ -49,8 +49,8 @@ const mulDivCeil = (a: bigint, b: bigint, c: bigint) => (a * b + c - 1n) / c;
 const mulDivFloor = (a: bigint, b: bigint, c: bigint) => (a * b) / c;
 const ONE = BigInt(ONE_SHARE);
 
-export function BasketDetail({ address }: { address: string }) {
-  const { basket, state, error, reload } = useBasket(address);
+export function BasketDetail({ address, initial }: { address: string; initial: Basket | null }) {
+  const { basket, state, error, reload } = useBasket(address, initial);
 
   useEffect(() => {
     if (basket) document.title = `${basket.name} (${basket.symbol}) · Tessera`;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PublicKey } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
@@ -82,6 +82,21 @@ export function Composer() {
   );
 
   const quotes = useMemo(() => snapshot?.quotes ?? [], [snapshot]);
+
+  // On a phone the basket panel sits two screens below the market, so a tap on
+  // a tile changes nothing you can see. A bar pinned to the bottom says what is
+  // picked until the panel itself comes into view.
+  const panel = useRef<HTMLDivElement>(null);
+  const [panelBelow, setPanelBelow] = useState(true);
+  useEffect(() => {
+    const el = panel.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) =>
+      setPanelBelow(!entry.isIntersecting && entry.boundingClientRect.top > 0),
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const composable = useMemo(
     () => quotes.filter((q) => MIRRORED.has(q.symbol)),
     [quotes],
@@ -367,8 +382,8 @@ export function Composer() {
       <div className="flex flex-col">
         <h1 className="display text-title text-ivory">Lay a basket</h1>
         <p className="mt-4 max-w-[56ch] text-base leading-relaxed text-ivory-dim">
-          Click a tile to put that company in the basket, then set the weights
-          beside it. Up to {MAX_COMPONENTS} components, and every one of them is
+          Pick a tile to put that company in the basket, or pick it from the
+          Table, then set the weights. Up to {MAX_COMPONENTS} components, and every one of them is
           a token already trading on Solana — public equities as xStocks, and
           pre-IPO companies as PreStocks, composed the same way.
         </p>
@@ -494,7 +509,7 @@ export function Composer() {
       </div>
 
       {/* ------------------------------------------------------------ basket */}
-      <div className="lg:sticky lg:top-24 lg:self-start">
+      <div ref={panel} className="scroll-mt-4 sm:scroll-mt-24 lg:sticky lg:top-24 lg:self-start">
         <div className="border border-rule bg-ground">
           <div className="border-b border-rule px-6 py-5">
             <h2 className="display text-xl text-ivory">
@@ -514,7 +529,7 @@ export function Composer() {
               tiles={tiles}
               height={220}
               onRemove={(key) => toggleSymbol(key)}
-              emptyHint="Click a tile on the left to lay the first tessera."
+              emptyHint="Pick a tile from the market to lay the first tessera."
             />
 
             {/* weights */}
@@ -679,6 +694,34 @@ export function Composer() {
           </div>
         </div>
       </div>
+
+      {picks.length > 0 && panelBelow && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-rule bg-ground-raised/95 backdrop-blur-md lg:hidden">
+          <div className="flex items-center justify-between gap-4 px-5 py-3">
+            <div className="min-w-0">
+              <p className="text-sm text-ivory">
+                {picks.length} of {MAX_COMPONENTS} picked
+              </p>
+              <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-ivory-faint">
+                {picks.map((pick) => (
+                  <span key={pick.symbol} className="flex items-center gap-1">
+                    <span aria-hidden className="size-2" style={{ background: slotColor(pick.slot) }} />
+                    {quoteBySymbol.get(pick.symbol)?.base ?? pick.symbol}
+                  </span>
+                ))}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => panel.current?.scrollIntoView({ block: "start" })}
+              className="shrink-0 border border-gold/60 bg-gold/10 px-4 py-2 text-sm text-ivory transition-colors hover:bg-gold/20"
+            >
+              Set weights
+            </button>
+          </div>
+          {error && <p className="px-5 pb-3 text-xs text-loss">{error}</p>}
+        </div>
+      )}
     </div>
   );
 }

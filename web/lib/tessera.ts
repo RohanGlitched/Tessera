@@ -16,7 +16,7 @@ import {
   TransactionInstruction,
   type AccountMeta,
 } from "@solana/web3.js";
-import { TESSERA_PROGRAM_ID, ONE_SHARE, SHARE_DECIMALS } from "./config";
+import { TESSERA_PROGRAM_ID, ONE_SHARE, SHARE_DECIMALS, WRITE_RPC } from "./config";
 
 export const PROGRAM_ID = new PublicKey(TESSERA_PROGRAM_ID);
 
@@ -216,6 +216,17 @@ export async function fetchBasket(
   const info = await connection.getAccountInfo(address);
   if (!info) return null;
   return decodeBasket(address, new Uint8Array(info.data));
+}
+
+/** For server code, which has no wallet-adapter connection to borrow. */
+export async function fetchBasketAt(address: string): Promise<Basket | null> {
+  let key: PublicKey;
+  try {
+    key = new PublicKey(address);
+  } catch {
+    return null;
+  }
+  return fetchBasket(new Connection(WRITE_RPC, "confirmed"), key).catch(() => null);
 }
 
 const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";

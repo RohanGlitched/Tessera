@@ -52,11 +52,11 @@ export function useBaskets() {
 }
 
 /** One basket, by address. */
-export function useBasket(address: string | null) {
+export function useBasket(address: string | null, initial: Basket | null = null) {
   const { connection } = useConnection();
-  const [basket, setBasket] = useState<Basket | null>(null);
+  const [basket, setBasket] = useState<Basket | null>(initial);
   const [state, setState] = useState<"loading" | "ready" | "missing" | "error">(
-    "loading",
+    initial ? "ready" : "loading",
   );
   const [error, setError] = useState<string | null>(null);
 

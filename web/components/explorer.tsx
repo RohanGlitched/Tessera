@@ -178,6 +178,7 @@ export function Explorer() {
 
       {rows.length > 0 && (
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <h2 className="sr-only">Baskets</h2>
           {rows.map((basket) => (
             <BasketCard key={basket.address} basket={basket} />
           ))}

@@ -100,9 +100,9 @@ export function HomeStats() {
         <div key={s.label} className="bg-ground-deep p-5">
           <dt className="text-xs text-ivory-faint">{s.label}</dt>
           <dd className="display tnum mt-2 text-2xl text-ivory">{s.value}</dd>
-          <p className="mt-1.5 text-xs leading-relaxed text-ivory-faint">
+          <dd className="mt-1.5 text-xs leading-relaxed text-ivory-faint">
             {s.note}
-          </p>
+          </dd>
         </div>
       ))}
     </dl>

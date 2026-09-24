@@ -11,6 +11,7 @@ import { BasketMosaic } from "./basket-mosaic";
 import { Figure } from "./figure";
 import { FaucetButton } from "./faucet-button";
 import { ConnectButton } from "./connect-button";
+import { MosaicSkeleton } from "./skeletons";
 import { TOKEN_2022_PROGRAM_ID, ONE_SHARE } from "@/lib/tessera";
 import { COMPOSABLE, writeMint, symbolForWriteMint } from "@/lib/mirror";
 import { slotColor } from "@/lib/palette";
@@ -230,18 +231,23 @@ export function Portfolio() {
 
         {/* Rather than an empty room, show the same arithmetic on public data:
             one share of every basket that exists, unwrapped to companies. */}
-        {demo.rows.length > 0 && (
+        {(demo.rows.length > 0 || ((loading || !snapshot) && !error)) && (
           <section className="mt-8 border-t border-rule pt-12">
             <h2 className="display text-title text-ivory">
               What the look-through does
             </h2>
             <p className="mt-3 max-w-[64ch] text-sm leading-relaxed text-ivory-dim">
-              One share of each of the {count(baskets?.length ?? 0)} baskets on
+              One share of{" "}
+              {baskets ? `each of the ${count(baskets.length)} baskets` : "every basket"} on
               this program, unwrapped to the companies underneath and added up.
               Your own version of this reads your balances instead.
             </p>
             <div className="mt-7">
-              <BasketMosaic tiles={demoTiles} height={260} />
+              {demo.rows.length > 0 ? (
+                <BasketMosaic tiles={demoTiles} height={260} />
+              ) : (
+                <MosaicSkeleton height={260} label="Reading the baskets" />
+              )}
             </div>
             {/* Rules drawn on the cells rather than as a background behind a
                 gap, so a part-filled last row does not leave a lit empty tile. */}

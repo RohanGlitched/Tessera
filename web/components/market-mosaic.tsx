@@ -133,7 +133,7 @@ export function MarketMosaic({
       )}
 
       {asTable ? (
-        <QuoteTable quotes={quotes} />
+        <QuoteTable quotes={quotes} selected={selected} onToggle={onToggle} />
       ) : (
         <div
           ref={ref}
@@ -179,7 +179,7 @@ export function MarketMosaic({
                     onBlur={() => setHover(null)}
                     onClick={onToggle ? () => onToggle(tile.key) : undefined}
                     tabIndex={onToggle ? 0 : -1}
-                    role={onToggle ? "checkbox" : undefined}
+                    role={onToggle ? "checkbox" : "img"}
                     aria-checked={onToggle ? isSelected : undefined}
                     aria-label={`${q.company}, ${q.symbol}, ${money(q.price)}, ${signedPercent(q.change24h)} over 24 hours`}
                     onKeyDown={
@@ -438,7 +438,15 @@ export function ChangeLegend() {
   );
 }
 
-export function QuoteTable({ quotes }: { quotes: Quote[] }) {
+export function QuoteTable({
+  quotes,
+  selected,
+  onToggle,
+}: {
+  quotes: Quote[];
+  selected?: Set<string>;
+  onToggle?: (mint: string) => void;
+}) {
   return (
     // Seven columns of numbers will not fit a phone, so this one does scroll
     // sideways — but `min-w-0` keeps the scrolling inside the box instead of
@@ -461,50 +469,77 @@ export function QuoteTable({ quotes }: { quotes: Quote[] }) {
           </tr>
         </thead>
         <tbody>
-          {quotes.map((q) => (
-            <tr key={q.mint} className="border-b border-rule/60 last:border-0">
-              <th scope="row" className="px-4 py-2.5 text-left font-normal">
-                <span className="text-ivory">{q.base}</span>
-                <span className="ml-2 text-xs text-ivory-faint">{q.company}</span>
-              </th>
-              <td className="tnum px-4 py-2.5 text-right text-ivory">
-                <Ticker value={money(q.price)} />
-              </td>
-              <td
-                className="tnum px-4 py-2.5 text-right"
-                style={{
-                  color:
-                    q.change24h == null
-                      ? "var(--color-ivory-dim)"
-                      : q.change24h > 0
-                        ? "var(--color-gain)"
-                        : "var(--color-loss)",
-                }}
+          {quotes.map((q) => {
+            const isSelected = selected?.has(q.mint) ?? false;
+            return (
+              <tr
+                key={q.mint}
+                className={`border-b border-rule/60 last:border-0 ${isSelected ? "bg-gold/[0.06]" : ""}`}
               >
-                {signedPercent(q.change24h)}
-              </td>
-              <td className="tnum px-4 py-2.5 text-right text-ivory-dim">
-                {money(q.sharePrice)}
-              </td>
-              <td className="tnum px-4 py-2.5 text-right text-ivory-dim">
-                {q.premiumBps == null
-                  ? "—"
-                  : `${q.premiumBps > 0 ? "+" : "−"}${Math.abs(q.premiumBps / 100).toFixed(2)}%`}
-              </td>
-              <td className="tnum px-4 py-2.5 text-right text-ivory-dim">
-                {moneyCompact(q.liquidity)}
-              </td>
-              <td className="tnum px-4 py-2.5 text-right">
-                {q.paysDividend ? (
-                  <span className="text-gold">+{percent(q.accruedYieldPct)}</span>
-                ) : PRESTOCK_SYMBOLS.has(q.symbol) ? (
-                  <span className="text-ivory-faint">pre-IPO</span>
-                ) : (
-                  <span className="text-ivory-faint">none yet</span>
-                )}
-              </td>
-            </tr>
-          ))}
+                <th scope="row" className="px-4 py-2.5 text-left font-normal">
+                  {onToggle ? (
+                    // The smallest tiles are too small to tap, so when the table
+                    // stands in for the mosaic every row can be picked from here.
+                    <button
+                      type="button"
+                      role="checkbox"
+                      aria-checked={isSelected}
+                      onClick={() => onToggle(q.mint)}
+                      className="-mx-2 -my-1.5 flex items-center gap-2.5 px-2 py-1.5 text-left transition-colors hover:bg-ground-high"
+                    >
+                      <span
+                        aria-hidden
+                        className={`size-3 shrink-0 border ${isSelected ? "border-gold bg-gold" : "border-rule-bright"}`}
+                      />
+                      <span className="text-ivory">{q.base}</span>
+                      <span className="text-xs text-ivory-faint">{q.company}</span>
+                    </button>
+                  ) : (
+                    <>
+                      <span className="text-ivory">{q.base}</span>
+                      <span className="ml-2 text-xs text-ivory-faint">{q.company}</span>
+                    </>
+                  )}
+                </th>
+                <td className="tnum px-4 py-2.5 text-right text-ivory">
+                  <Ticker value={money(q.price)} />
+                </td>
+                <td
+                  className="tnum px-4 py-2.5 text-right"
+                  style={{
+                    color:
+                      q.change24h == null
+                        ? "var(--color-ivory-dim)"
+                        : q.change24h > 0
+                          ? "var(--color-gain)"
+                          : "var(--color-loss)",
+                  }}
+                >
+                  {signedPercent(q.change24h)}
+                </td>
+                <td className="tnum px-4 py-2.5 text-right text-ivory-dim">
+                  {money(q.sharePrice)}
+                </td>
+                <td className="tnum px-4 py-2.5 text-right text-ivory-dim">
+                  {q.premiumBps == null
+                    ? "—"
+                    : `${q.premiumBps > 0 ? "+" : "−"}${Math.abs(q.premiumBps / 100).toFixed(2)}%`}
+                </td>
+                <td className="tnum px-4 py-2.5 text-right text-ivory-dim">
+                  {moneyCompact(q.liquidity)}
+                </td>
+                <td className="tnum px-4 py-2.5 text-right">
+                  {q.paysDividend ? (
+                    <span className="text-gold">+{percent(q.accruedYieldPct)}</span>
+                  ) : PRESTOCK_SYMBOLS.has(q.symbol) ? (
+                    <span className="text-ivory-faint">pre-IPO</span>
+                  ) : (
+                    <span className="text-ivory-faint">none yet</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
