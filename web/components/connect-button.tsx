@@ -10,7 +10,6 @@ export function ConnectButton() {
   const { wallets, select, connect, connected, connecting, publicKey, disconnect, wallet } =
     useWallet();
   const [open, setOpen] = useState(false);
-  const [pending, setPending] = useState<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,29 +33,21 @@ export function ConnectButton() {
   );
 
   /**
-   * select() stages the choice and returns before the provider has it, so
-   * calling connect() in the same tick throws WalletNotSelectedError. Record what
-   * was picked and connect once the provider agrees which wallet is selected.
+   * With autoConnect on, the provider connects a newly selected wallet itself,
+   * after it has subscribed to the adapter. Connecting from here raced that
+   * subscription: a wallet that already trusts the site connects without a
+   * popup, its connect event was lost, and every later click was a no-op.
    */
   function pick(name: string) {
     setOpen(false);
-    select(name as never);
-    setPending(name);
-  }
-
-  useEffect(() => {
-    if (!pending) return;
-    if (connected) {
-      setPending(null);
+    if (wallet?.adapter.name !== name) {
+      select(name as never);
       return;
     }
-    if (connecting) return;
-    if (wallet?.adapter.name !== pending) return;
-    setPending(null);
     void connect().catch(() => {
       /* the wallet reports its own rejection */
     });
-  }, [pending, wallet, connected, connecting, connect]);
+  }
 
   if (connected && publicKey) {
     return (
@@ -109,10 +100,10 @@ export function ConnectButton() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        disabled={connecting || pending !== null}
+        disabled={connecting}
         className="border border-gold/60 bg-gold/10 px-4 py-2 text-sm text-ivory transition-colors hover:bg-gold/20 disabled:opacity-60"
       >
-        {connecting || pending ? "Connecting…" : "Connect wallet"}
+        {connecting ? "Connecting…" : "Connect wallet"}
       </button>
       {open && (
         <div className="absolute right-0 top-full z-50 mt-1.5 w-64 border border-rule bg-ground-raised p-1 shadow-2xl shadow-black/50">
