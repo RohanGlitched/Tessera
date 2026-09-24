@@ -13,6 +13,7 @@ import {
 import type { Quote } from "@/lib/market";
 import { useMeasure } from "@/lib/use-measure";
 import { PRESTOCK_SYMBOLS } from "@/lib/prestocks";
+import { Ticker } from "./ticker";
 
 export type SizeBy = "liquidity" | "volume24h";
 
@@ -149,7 +150,7 @@ export function MarketMosaic({
               aria-label={`Market mosaic of ${quotes.length} tokenised equities, sized by ${SIZE_LABEL[size]}`}
               style={{ background: CHART_SURFACE }}
             >
-              {tiles.map((tile) => {
+              {tiles.map((tile, index) => {
                 const q = byMint.get(tile.key);
                 if (!q) return null;
                 const isSelected = selected?.has(tile.key) ?? false;
@@ -191,7 +192,11 @@ export function MarketMosaic({
                           }
                         : undefined
                     }
-                    style={{ cursor: onToggle ? "pointer" : "default" }}
+                    className="mosaic-tile"
+                    style={{
+                      cursor: onToggle ? "pointer" : "default",
+                      animationDelay: `${Math.min(index, 30) * 14}ms`,
+                    }}
                   >
                     <rect
                       x={tile.x}
@@ -200,7 +205,6 @@ export function MarketMosaic({
                       height={tile.height}
                       fill={changeColor(q.change24h)}
                       opacity={hover && !isHovered ? 0.62 : 1}
-                      style={{ transition: "opacity 140ms ease-out" }}
                     />
                     {(isSelected || isHovered) && (
                       <rect
@@ -464,7 +468,7 @@ export function QuoteTable({ quotes }: { quotes: Quote[] }) {
                 <span className="ml-2 text-xs text-ivory-faint">{q.company}</span>
               </th>
               <td className="tnum px-4 py-2.5 text-right text-ivory">
-                {money(q.price)}
+                <Ticker value={money(q.price)} />
               </td>
               <td
                 className="tnum px-4 py-2.5 text-right"

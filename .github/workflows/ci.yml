@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  app:
+    name: App (lint, typecheck and build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm build
+
+  program:
+    name: Program (anchor test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.89.0
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/anchor
+            ~/.local/share/solana
+          key: toolchain-anchor-0.31.1-solana-4.2.2
+      - name: Install Solana and Anchor
+        run: |
+          if [ ! -x ~/.local/share/solana/install/active_release/bin/solana ]; then
+            sh -c "$(curl -sSfL https://release.anza.xyz/v4.2.2/install)"
+          fi
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+          if [ ! -x ~/.cargo/bin/anchor ]; then
+            cargo install --git https://github.com/coral-xyz/anchor --tag v0.31.1 anchor-cli --locked
+          fi
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Test
+        run: |
+          solana-keygen new --no-bip39-passphrase --silent -o ~/.config/solana/id.json
+          anchor keys sync
+          anchor test

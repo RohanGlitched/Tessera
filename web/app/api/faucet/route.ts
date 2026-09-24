@@ -34,6 +34,26 @@ const DECIMALS_BY_SYMBOL = new Map(COMPOSABLE.map((s) => [s.symbol, s.decimals])
 /** Last claim per address. Per-instance and deliberately simple. */
 const lastClaim = new Map<string, number>();
 
+/** Fresh addresses cost the faucet account rent, so cap claims per IP as well. */
+const IP_WINDOW_MS = 10 * 60_000;
+const IP_MAX_CLAIMS = 6;
+const claimsByIp = new Map<string, number[]>();
+
+function clientIp(request: Request): string {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown"
+  );
+}
+
+function recentClaims(ip: string): number[] {
+  const now = Date.now();
+  const recent = (claimsByIp.get(ip) ?? []).filter((t) => now - t < IP_WINDOW_MS);
+  claimsByIp.set(ip, recent);
+  return recent;
+}
+
 function faucetKeypair(): Keypair | null {
   const secret = process.env.FAUCET_SECRET_KEY;
   if (!secret) return null;
@@ -81,6 +101,16 @@ export async function POST(request: Request) {
     const wait = Math.ceil((COOLDOWN_MS - (Date.now() - previous)) / 1000);
     return Response.json(
       { error: `Already claimed. Try again in ${wait}s.` },
+      { status: 429 },
+    );
+  }
+
+  const ip = clientIp(request);
+  const fromIp = recentClaims(ip);
+  if (fromIp.length >= IP_MAX_CLAIMS) {
+    const wait = Math.ceil((IP_WINDOW_MS - (Date.now() - fromIp[0])) / 60_000);
+    return Response.json(
+      { error: `Too many claims from this network. Try again in ${wait} min.` },
       { status: 429 },
     );
   }
@@ -137,6 +167,7 @@ export async function POST(request: Request) {
       commitment: "confirmed",
     });
     lastClaim.set(owner.toBase58(), Date.now());
+    fromIp.push(Date.now());
     return Response.json({
       signature,
       cluster: WRITE_CLUSTER,

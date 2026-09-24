@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { PublicKey } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useBasket } from "@/lib/use-baskets";
 import { useBalances } from "@/lib/use-balances";
@@ -34,6 +33,8 @@ import {
   count,
 } from "@/lib/format";
 import type { Basket } from "@/lib/tessera";
+import { Ticker } from "./ticker";
+import { BasketSkeleton } from "./skeletons";
 
 /**
  * One basket, in full.
@@ -56,11 +57,7 @@ export function BasketDetail({ address }: { address: string }) {
   }, [basket]);
 
   if (state === "loading") {
-    return (
-      <p className="py-32 text-center text-sm text-ivory-faint">
-        Reading the basket…
-      </p>
-    );
+    return <BasketSkeleton />;
   }
 
   if (state === "missing" || !basket) {
@@ -157,7 +154,7 @@ function Loaded({
           <div className="text-left sm:text-right">
             <p className="text-xs text-ivory-faint">One share</p>
             <p className="tnum display mt-1 text-title leading-none text-ivory">
-              {money(valuation.nav)}
+              <Ticker value={money(valuation.nav)} />
             </p>
             <p
               className="tnum mt-1.5 text-sm"
@@ -237,9 +234,11 @@ function Loaded({
           <Figure
             label="Shares outstanding"
             value={onChain ? count(onChain.shares) : "—"}
-            note={`${count(Number(basket.mintCount))} creations, ${count(
-              Number(basket.redeemCount),
-            )} redemptions`}
+            note={`${count(Number(basket.mintCount))} ${
+              Number(basket.mintCount) === 1 ? "creation" : "creations"
+            }, ${count(Number(basket.redeemCount))} ${
+              Number(basket.redeemCount) === 1 ? "redemption" : "redemptions"
+            }`}
           />
         </dl>
 
@@ -557,10 +556,10 @@ function Backing({
                         )}
                       </td>
                       <td className="tnum px-3 py-3 text-right text-ivory-dim sm:px-4">
-                        {quantity(Number(vault.held) / 10 ** decimals, 6)}
+                        <Ticker value={quantity(Number(vault.held) / 10 ** decimals, 6)} />
                       </td>
                       <td className="tnum px-3 py-3 text-right text-ivory-dim sm:px-4">
-                        {quantity(Number(vault.owed) / 10 ** decimals, 6)}
+                        <Ticker value={quantity(Number(vault.owed) / 10 ** decimals, 6)} />
                       </td>
                       <td className="tnum px-3 py-3 text-right sm:px-4">
                         <span

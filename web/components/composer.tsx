@@ -17,6 +17,7 @@ import { unitsForWeights } from "@/lib/tessera";
 import { buildCreateBasket, sendSteps, explainError } from "@/lib/tx";
 import { MAX_COMPONENTS, MAX_CREATOR_FEE_BPS, explorerTx } from "@/lib/config";
 import type { Quote } from "@/lib/market";
+import { MosaicSkeleton } from "./skeletons";
 
 type Pick = { symbol: string; slot: number };
 
@@ -80,7 +81,7 @@ export function Composer() {
     null,
   );
 
-  const quotes = snapshot?.quotes ?? [];
+  const quotes = useMemo(() => snapshot?.quotes ?? [], [snapshot]);
   const composable = useMemo(
     () => quotes.filter((q) => MIRRORED.has(q.symbol)),
     [quotes],
@@ -331,7 +332,7 @@ export function Composer() {
           {trimmedName} exists.
         </h1>
         <p className="mt-5 text-base leading-relaxed text-ivory-dim">
-          The recipe is written into a program account and the share mint's
+          The recipe is written into a program account and the share mint&apos;s
           authority now belongs to it. Anybody can create shares by handing the vault
           the components, and redeem them for the same components back.
         </p>
@@ -400,9 +401,7 @@ export function Composer() {
 
         <div className="mt-7 flex min-h-[440px] flex-1 flex-col">
           {loading && !snapshot ? (
-            <div className="flex flex-1 items-center justify-center border border-rule">
-              <p className="text-sm text-ivory-faint">Reading mainnet prices…</p>
-            </div>
+            <MosaicSkeleton height={440} label="Reading mainnet prices" />
           ) : (
             <MarketMosaic
               quotes={composable}

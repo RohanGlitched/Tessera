@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useBaskets } from "@/lib/use-baskets";
 import { BasketCard } from "./basket-card";
+import { CardSkeletons } from "./skeletons";
 
 export function FeaturedBaskets() {
   const { baskets, error, loading } = useBaskets();
@@ -24,9 +25,7 @@ export function FeaturedBaskets() {
         </Link>
       </div>
 
-      {loading && (
-        <p className="mt-10 text-sm text-ivory-faint">Reading the program…</p>
-      )}
+      {loading && <CardSkeletons />}
 
       {error && (
         <p className="mt-10 border-l-2 border-loss pl-3 text-sm leading-relaxed text-loss">

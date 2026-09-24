@@ -1,3 +1,5 @@
+import { Ticker } from "./ticker";
+
 /**
  * One number with the sentence that makes it mean something.
  *
@@ -28,7 +30,7 @@ export function Figure({
       <dt className="text-xs text-ivory-faint">{label}</dt>
       <dd>
         <span className="tnum display mt-1.5 block text-xl" style={{ color }}>
-          {value}
+          <Ticker value={value} />
         </span>
         <span className="mt-1 block text-xs leading-relaxed text-ivory-faint">
           {note}

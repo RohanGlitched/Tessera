@@ -38,7 +38,8 @@ export function BasketCard({ basket }: { basket: Basket }) {
         <div className="min-w-0">
           <h3 className="display truncate text-lg text-ivory">{basket.name}</h3>
           <p className="tnum mt-0.5 text-xs text-ivory-faint">
-            {basket.symbol} · {basket.components.length} components · by{" "}
+            {basket.symbol} · {basket.components.length}{" "}
+            {basket.components.length === 1 ? "component" : "components"} · by{" "}
             {shortAddress(basket.creator)}
           </p>
           {(hasPreStocks || dbc) && (

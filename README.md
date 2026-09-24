@@ -1,6 +1,12 @@
 # Tessera
 
+[![CI](https://github.com/RohanGlitched/Tessera/actions/workflows/ci.yml/badge.svg)](https://github.com/RohanGlitched/Tessera/actions/workflows/ci.yml)
+
 **Anyone can launch an index fund. It takes one transaction, and nobody has to trust the person who launched it.**
+
+**[Open the app](https://tessera-fund.vercel.app)** · [Program on Solana Explorer](https://explorer.solana.com/address/F8QLTZPe9mJuPgXCbccnU9G2kMSEE4inygdUw3QZbrQ?cluster=devnet)
+
+![Tessera: the live market mosaic of tokenised equities](.github/readme/home.png)
 
 An index fund is two things: a list of companies and a set of weights. Everything
 else the industry grew around it is administration. Tessera keeps the two things
@@ -17,6 +23,20 @@ let the creator change what your share is a claim on.
 The creator earns a fee of up to 1% on every share created — paid in shares of
 their own basket, never out of the vault.
 
+```mermaid
+sequenceDiagram
+  participant C as Creator
+  participant P as Tessera program
+  participant H as Holder
+  C->>P: create_basket (recipe, fee)
+  H->>P: mint_shares: hand the vault every component
+  P-->>H: shares, plus the creator's fee cut in shares
+  H->>P: redeem_shares: burn shares
+  P-->>H: every component back out of the vault
+```
+
+![A basket page: recipe, vault holdings and net asset value](.github/readme/basket.png)
+
 ---
 
 ## What is actually real here
@@ -24,7 +44,7 @@ their own basket, never out of the vault.
 | | |
 |---|---|
 | Prices, 24-hour moves, liquidity, holders, dividend multipliers | **Solana mainnet, live** |
-| The 20 tokenised equities being composed | **Real xStocks by Backed Finance** |
+| The 28 tokenised equities being composed | **Real xStocks by Backed Finance (20) and pre-IPO PreStocks (8)** |
 | Creating and redeeming shares | **Devnet**, against mirror mints (see below) |
 | The program's arithmetic | **10 passing integration tests** |
 
@@ -195,7 +215,8 @@ creation) is the natural next step, not yet built.
 ## The program
 
 `programs/tessera/src/lib.rs`, Anchor 0.31.1. Program ID
-`F8QLTZPe9mJuPgXCbccnU9G2kMSEE4inygdUw3QZbrQ`.
+`F8QLTZPe9mJuPgXCbccnU9G2kMSEE4inygdUw3QZbrQ`. Its IDL is published on devnet,
+so Solana Explorer decodes every Tessera instruction by name.
 
 Three instructions:
 

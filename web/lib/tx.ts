@@ -491,13 +491,16 @@ export function explainError(error: unknown): string {
     if (raw.includes(code)) return message;
   }
 
+  if (/no record of a prior credit|blockhash not found/i.test(raw)) {
+    return "Your wallet looks to be on a different network. Switch it to devnet, where Tessera settles, and try again.";
+  }
   if (/insufficient lamports|insufficient funds/i.test(raw)) {
     return "Not enough SOL in the wallet to pay for this transaction.";
   }
   if (/0x1\b/.test(raw)) {
     return "Not enough of one of the component tokens. Claim test tokens and try again.";
   }
-  if (/blockhash not found|block height exceeded/i.test(raw)) {
+  if (/block height exceeded/i.test(raw)) {
     return "The transaction expired before it was signed. Try again.";
   }
   return raw.split("\n")[0] || "The transaction failed.";

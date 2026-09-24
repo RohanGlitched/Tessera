@@ -7,6 +7,7 @@ import { useMarket } from "./market-provider";
 import { valueBasket } from "@/lib/basket-view";
 import { BasketCard } from "./basket-card";
 import { count, money } from "@/lib/format";
+import { CardSkeletons } from "./skeletons";
 
 /**
  * Every basket, in an order the visitor chooses.
@@ -144,9 +145,7 @@ export function Explorer() {
         </div>
       )}
 
-      {loading && (
-        <p className="mt-12 text-sm text-ivory-faint">Reading the program…</p>
-      )}
+      {loading && <CardSkeletons count={6} />}
 
       {error && (
         <p className="mt-12 border-l-2 border-loss pl-3 text-sm leading-relaxed text-loss">

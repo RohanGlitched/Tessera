@@ -5,19 +5,13 @@ import { useMarket } from "./market-provider";
 import { MarketMosaic } from "./market-mosaic";
 import { moneyCompact, count, timeAgo } from "@/lib/format";
 import { PRESTOCK_SYMBOLS } from "@/lib/prestocks";
+import { MosaicSkeleton } from "./skeletons";
 
 export function HomeMosaic() {
   const { snapshot, loading, error, updatedAt } = useMarket();
 
   if (loading && !snapshot) {
-    return (
-      <div
-        className="flex h-[460px] items-center justify-center border border-rule bg-ground"
-        aria-busy
-      >
-        <p className="text-sm text-ivory-faint">Reading mainnet prices…</p>
-      </div>
-    );
+    return <MosaicSkeleton height={460} label="Reading mainnet prices" />;
   }
 
   if (!snapshot) {

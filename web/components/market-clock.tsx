@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { XSTOCKS } from "@/lib/universe";
 import { parseSchedule, marketState, CLOSED_REASON } from "@/lib/clock";
 import { duration } from "@/lib/format";
@@ -15,6 +15,8 @@ const SCHEDULE = parseSchedule(
   XSTOCKS.find((s) => s.schedule)?.schedule ?? null,
 );
 
+const noSubscribe = () => () => {};
+
 function useTick(ms = 1000) {
   const [, force] = useState(0);
   useEffect(() => {
@@ -27,14 +29,12 @@ export function MarketClock({ compact = false }: { compact?: boolean }) {
   useTick();
   // Rendered on the client only: the server's clock and the reader's differ, and
   // a countdown that arrives pre-rendered is a countdown that arrives wrong.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  const state = useMemo(
-    () => (mounted ? marketState(SCHEDULE) : null),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mounted, Math.floor(Date.now() / 1000)],
+  const mounted = useSyncExternalStore(
+    noSubscribe,
+    () => true,
+    () => false,
   );
+  const state = mounted ? marketState(SCHEDULE) : null;
 
   if (compact) {
     return (

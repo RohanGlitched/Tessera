@@ -90,7 +90,7 @@ export function BasketMosaic({
               return (
                 <g
                   key={tile.key}
-                  className="group"
+                  className="group mosaic-tile"
                   onClick={onRemove ? () => onRemove(tile.key) : undefined}
                   style={{ cursor: onRemove ? "pointer" : "default" }}
                 >

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Archivo } from "next/font/google";
 import "./globals.css";
+import { DevnetNotice } from "@/components/devnet-notice";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { WalletProvider } from "@/components/wallet-provider";
@@ -28,6 +29,7 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://tessera-fund.vercel.app"),
   title: {
     default: "Tessera — index funds anyone can lay",
     template: "%s · Tessera",
@@ -40,6 +42,7 @@ export const metadata: Metadata = {
       "Compose tokenised stocks into one tradeable token, backed share for share.",
     type: "website",
   },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -52,6 +55,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <WalletProvider>
           <MarketProvider>
             <SiteHeader />
+            <DevnetNotice />
             <main className="flex-1">{children}</main>
             <SiteFooter />
           </MarketProvider>
