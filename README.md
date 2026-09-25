@@ -4,7 +4,7 @@
 
 **Anyone can launch an index fund on Solana. It takes one transaction, and nobody has to trust the person who launched it.**
 
-**[Open the app](https://tessera-fund.vercel.app)** · [Program on Solana Explorer](https://explorer.solana.com/address/F8QLTZPe9mJuPgXCbccnU9G2kMSEE4inygdUw3QZbrQ?cluster=devnet) · [Try it in two minutes](#try-it-in-two-minutes) · [Run it yourself](#run-it-yourself)
+**[Open the app](https://www.teserra.world)** · [Program on Solana Explorer](https://explorer.solana.com/address/F8QLTZPe9mJuPgXCbccnU9G2kMSEE4inygdUw3QZbrQ?cluster=devnet) · [Try it in two minutes](#try-it-in-two-minutes) · [Run it yourself](#run-it-yourself)
 
 ![Tessera: the live market mosaic of tokenised equities](.github/readme/home.png)
 
@@ -51,23 +51,23 @@ Everything below runs on devnet and costs nothing.
 2. **Get free devnet SOL** for fees at [faucet.solana.com](https://faucet.solana.com).
    If your wallet has none, the app shows a banner with a copy-address button and
    a link to the faucet.
-3. **Open [tessera-fund.vercel.app](https://tessera-fund.vercel.app)** and
+3. **Open [teserra.world](https://www.teserra.world)** and
    connect. The market on the home page is live mainnet data.
-4. **Claim test tokens.** On [Portfolio](https://tessera-fund.vercel.app/portfolio),
+4. **Claim test tokens.** On [Portfolio](https://www.teserra.world/portfolio),
    press **Claim a starter set**, or press **Send me … of each** on any basket
    page when you are short of a component.
 5. **Create shares in an existing basket.** Open one from
-   [Explore](https://tessera-fund.vercel.app/explore), for example
-   [The Big Five](https://tessera-fund.vercel.app/basket/6cUCq5GdhrdLGqJiy63iuc1epLFrEmAYQ45JvYEYGbg3),
+   [Explore](https://www.teserra.world/explore), for example
+   [The Big Five](https://www.teserra.world/basket/6cUCq5GdhrdLGqJiy63iuc1epLFrEmAYQ45JvYEYGbg3),
    choose how many shares, and press **Create BIG5**. The vault holdings and the
    backing check update as soon as the transaction lands.
 6. **Redeem them** from the same panel. Every component comes back to your wallet.
-7. **Launch your own index fund.** On [Compose](https://tessera-fund.vercel.app/compose),
+7. **Launch your own index fund.** On [Compose](https://www.teserra.world/compose),
    tap tiles (or pick from the Table view), drag the weights, name the token, set
    a creator fee and press **Lay the basket**. It gets its own page and its own
    link preview.
 
-**[Portfolio](https://tessera-fund.vercel.app/portfolio)** then looks through
+**[Portfolio](https://www.teserra.world/portfolio)** then looks through
 everything you hold to the companies underneath, so three baskets that all
 contain NVIDIA show up as one NVIDIA exposure.
 
@@ -163,7 +163,7 @@ reads the mint's live fee schedule at deposit time and grosses the transfer up,
 so the vault nets exactly the recipe amount. The ninth test covers it, and it is
 verified live on devnet:
 
-- **Basket:** [`5Z8XUzGVJjcYPxPZ6Hfxx8uJRNKibFcmZd7yStuSPr1p`](https://tessera-fund.vercel.app/basket/5Z8XUzGVJjcYPxPZ6Hfxx8uJRNKibFcmZd7yStuSPr1p),
+- **Basket:** [`5Z8XUzGVJjcYPxPZ6Hfxx8uJRNKibFcmZd7yStuSPr1p`](https://www.teserra.world/basket/5Z8XUzGVJjcYPxPZ6Hfxx8uJRNKibFcmZd7yStuSPr1p),
   "Frontier Labs", four PreStocks components.
 - **Creation tx:** [`4jNTjhUg…BAsbkz`](https://explorer.solana.com/tx/4jNTjhUgbGUu1eLhCXZmZrzZ8H9Mr1UXJH1stbSw1GVopVM22rdet7xHT5BTWhG6NHYtdoHn3LgHoyppkBAsBbkz?cluster=devnet)
 - **On chain:** the ANTHROPIC vault holds `513564189` raw units, with `2580725`
@@ -295,7 +295,7 @@ pnpm build && pnpm start          # http://localhost:3000
 
 Everything works locally except the test-token faucet, which needs the mirror
 mints' authority key. To get test tokens, claim them once on the
-[hosted app](https://tessera-fund.vercel.app/portfolio). They land in your wallet
+[hosted app](https://www.teserra.world/portfolio). They land in your wallet
 and work locally as well.
 
 ### Option 2: run the program tests

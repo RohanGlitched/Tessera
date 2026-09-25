@@ -147,3 +147,18 @@ export function fitsTile(
 ): boolean {
   return tileWidth >= inset + text.length * fontSize * 0.68 + 4;
 }
+
+/** The whole string if it fits, else as much as fits with an ellipsis, else null. */
+export function fitLabel(
+  text: string,
+  fontSize: number,
+  tileWidth: number,
+  inset: number,
+): string | null {
+  if (fitsTile(text, fontSize, tileWidth, inset)) return text;
+  for (let keep = text.length - 1; keep >= 3; keep--) {
+    const short = `${text.slice(0, keep)}…`;
+    if (fitsTile(short, fontSize, tileWidth, inset)) return short;
+  }
+  return null;
+}

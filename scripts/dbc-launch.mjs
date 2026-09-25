@@ -155,7 +155,7 @@ const tx = await client.partner.createConfigAndPool({
   preCreatePoolParam: {
     name: "Frontier Labs, early access",
     symbol: "FRNTRA",
-    uri: "https://tessera-fund.vercel.app/basket/5Z8XUzGVJjcYPxPZ6Hfxx8uJRNKibFcmZd7yStuSPr1p",
+    uri: "https://www.teserra.world/basket/5Z8XUzGVJjcYPxPZ6Hfxx8uJRNKibFcmZd7yStuSPr1p",
     poolCreator: payer.publicKey,
     baseMint: baseMintKeypair.publicKey,
   },

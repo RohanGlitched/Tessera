@@ -495,8 +495,8 @@ export function Composer() {
                 value={feeBps}
                 aria-label="Creator fee in basis points"
                 onChange={(e) => setFeeBps(Number(e.target.value))}
-                className="mt-3 w-full"
-                style={{ accentColor: "var(--color-gold)" }}
+                className="slider mt-3 w-full"
+                style={sliderStyle("var(--color-gold)", feeBps, 0, MAX_CREATOR_FEE_BPS)}
               />
             </div>
             <p className="text-xs leading-relaxed text-ivory-faint">
@@ -580,8 +580,13 @@ export function Composer() {
                           setWeights((w) => setWeight(w, i, Number(e.target.value)))
                         }
                         disabled={recipe.rows.length === 1}
-                        className="mt-2 w-full accent-[var(--color-gold)]"
-                        style={{ accentColor: slotColor(row.pick.slot) }}
+                        className="slider mt-2 w-full"
+                        style={sliderStyle(
+                          slotColor(row.pick.slot),
+                          row.weightBps,
+                          100,
+                          WEIGHT_TOTAL - 100 * (recipe.rows.length - 1),
+                        )}
                       />
                       {row.quote && recipe.units && (
                         <p className="tnum mt-1 text-xs text-ivory-faint">
@@ -702,7 +707,7 @@ export function Composer() {
               <p className="text-sm text-ivory">
                 {picks.length} of {MAX_COMPONENTS} picked
               </p>
-              <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-ivory-faint">
+              <p className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-ivory-faint">
                 {picks.map((pick) => (
                   <span key={pick.symbol} className="flex items-center gap-1">
                     <span aria-hidden className="size-2" style={{ background: slotColor(pick.slot) }} />
@@ -724,6 +729,11 @@ export function Composer() {
       )}
     </div>
   );
+}
+
+function sliderStyle(fill: string, value: number, min: number, max: number) {
+  const filled = max > min ? ((value - min) / (max - min)) * 100 : 100;
+  return { "--fill": fill, "--filled": `${filled}%` } as React.CSSProperties;
 }
 
 export type { Quote };

@@ -45,7 +45,7 @@ export function useBaskets() {
   }, [connection]);
 
   useEffect(() => {
-    void load();
+    void Promise.resolve().then(load);
   }, [load]);
 
   return { baskets, error, reload: load, loading: baskets == null && !error };
@@ -84,7 +84,7 @@ export function useBasket(address: string | null, initial: Basket | null = null)
   }, [connection, address]);
 
   useEffect(() => {
-    void load();
+    void Promise.resolve().then(load);
   }, [load]);
 
   return { basket, state, error, reload: load };

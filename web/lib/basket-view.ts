@@ -97,7 +97,7 @@ export function useOnChainBasket(basket: Basket | null) {
   }, [connection, basket]);
 
   useEffect(() => {
-    void load();
+    void Promise.resolve().then(load);
   }, [load]);
 
   return { onChain: data, error, reload: load };

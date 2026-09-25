@@ -115,7 +115,7 @@ export default async function Image({ params }: { params: Promise<{ address: str
           <div style={{ display: "flex", gap: 12, marginTop: "auto", fontSize: 20, color: "#7c8090" }}>
             <span style={{ color: "#b18827" }}>Backed share for share on Solana</span>
             <span>·</span>
-            <span>tessera-fund.vercel.app</span>
+            <span>teserra.world</span>
           </div>
         </div>
         <div style={{ display: "flex", position: "relative", marginLeft: "auto", width: MOSAIC, height: MOSAIC, marginTop: 4 }}>

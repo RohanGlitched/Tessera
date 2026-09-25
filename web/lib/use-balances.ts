@@ -82,7 +82,7 @@ export function useBalances(
   }, [connection, publicKey, key]);
 
   useEffect(() => {
-    void load();
+    void Promise.resolve().then(load);
   }, [load]);
 
   return { raw, loading, error, reload: load };

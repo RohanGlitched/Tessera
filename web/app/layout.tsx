@@ -29,7 +29,7 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://tessera-fund.vercel.app"),
+  metadataBase: new URL("https://www.teserra.world"),
   title: {
     default: "Tessera — index funds anyone can lay",
     template: "%s · Tessera",

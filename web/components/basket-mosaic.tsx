@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { squarify, fitsTile } from "@/lib/treemap";
+import { squarify, fitsTile, fitLabel } from "@/lib/treemap";
 import { slotColor, CHART_SURFACE } from "@/lib/palette";
 import { percent } from "@/lib/format";
 import { useMeasure } from "@/lib/use-measure";
@@ -76,8 +76,9 @@ export function BasketMosaic({
               // Nothing clips an SVG label, so each line is drawn only if the
               // string it holds fits the tessera it belongs to.
               const weight = percent(tile.meta.weightBps / 100, 1);
-              const roomForLabel =
-                tile.height > 26 && fitsTile(tile.meta.label, 13, tile.width, 8);
+              const label =
+                tile.height > 26 ? fitLabel(tile.meta.label, 13, tile.width, 8) : null;
+              const roomForLabel = label !== null;
               const roomForWeight =
                 roomForLabel &&
                 tile.height > 44 &&
@@ -94,6 +95,7 @@ export function BasketMosaic({
                   onClick={onRemove ? () => onRemove(tile.key) : undefined}
                   style={{ cursor: onRemove ? "pointer" : "default" }}
                 >
+                  <title>{`${tile.meta.label} ${weight}`}</title>
                   <rect
                     x={tile.x}
                     y={tile.y}
@@ -115,7 +117,7 @@ export function BasketMosaic({
                       pointerEvents="none"
                       style={{ transition: "x 300ms, y 300ms" }}
                     >
-                      {tile.meta.label}
+                      {label}
                     </text>
                   )}
                   {roomForWeight && (

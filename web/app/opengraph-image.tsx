@@ -66,7 +66,7 @@ export default async function Image() {
           <div style={{ display: "flex", gap: 12, marginTop: "auto", fontSize: 20, color: "#7c8090" }}>
             <span style={{ color: "#b18827" }}>Built on Solana</span>
             <span>·</span>
-            <span>tessera-fund.vercel.app</span>
+            <span>teserra.world</span>
           </div>
         </div>
         <div style={{ display: "flex", position: "relative", marginLeft: "auto", width: 450, height: 470, marginTop: 8 }}>

@@ -59,7 +59,7 @@ export function MarketProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    void load();
+    void Promise.resolve().then(load);
     let timer: ReturnType<typeof setInterval> | null = null;
 
     const start = () => {
