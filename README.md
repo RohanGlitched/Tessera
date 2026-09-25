@@ -2,26 +2,28 @@
 
 [![CI](https://github.com/RohanGlitched/Tessera/actions/workflows/ci.yml/badge.svg)](https://github.com/RohanGlitched/Tessera/actions/workflows/ci.yml)
 
-**Anyone can launch an index fund. It takes one transaction, and nobody has to trust the person who launched it.**
+**Anyone can launch an index fund on Solana. It takes one transaction, and nobody has to trust the person who launched it.**
 
-**[Open the app](https://tessera-fund.vercel.app)** · [Program on Solana Explorer](https://explorer.solana.com/address/F8QLTZPe9mJuPgXCbccnU9G2kMSEE4inygdUw3QZbrQ?cluster=devnet)
+**[Open the app](https://tessera-fund.vercel.app)** · [Program on Solana Explorer](https://explorer.solana.com/address/F8QLTZPe9mJuPgXCbccnU9G2kMSEE4inygdUw3QZbrQ?cluster=devnet) · [Try it in two minutes](#try-it-in-two-minutes) · [Run it yourself](#run-it-yourself)
 
 ![Tessera: the live market mosaic of tokenised equities](.github/readme/home.png)
 
-An index fund is two things: a list of companies and a set of weights. Everything
-else the industry grew around it is administration. Tessera keeps the two things
-and deletes the administration.
+An index fund is two things: a list of companies and a set of weights. Tessera
+turns those two things into a token.
 
-Pick up to eight tokenised equities, set their weights, and Tessera writes a
-recipe into a Solana program and hands that program the authority over a new
-share mint. From then on the share is a claim on specific quantities of specific
-tokens sitting in a vault anyone can read. You create shares by handing the vault
-the components. You redeem them by taking the components back. No oracle is
-consulted, no manager can rebalance you, and no upgrade path exists that would
-let the creator change what your share is a claim on.
+Pick up to eight tokenised equities (xStocks such as Apple, NVIDIA and Tesla, or
+pre-IPO PreStocks such as OpenAI, Anthropic and SpaceX), set their weights, and
+Tessera writes that recipe into a Solana program. The program becomes the only
+authority over a new share token. From then on:
 
-The creator earns a fee of up to 1% on every share created — paid in shares of
-their own basket, never out of the vault.
+- **One share is a claim on exact quantities of real tokens** held in a vault
+  that anyone can read.
+- **Anyone can create shares** by depositing the components, and **anyone can
+  redeem** by burning shares and taking the components back.
+- **No oracle, no manager, no edit button.** The recipe is fixed at creation, and
+  the program has no instruction that lets the creator touch the vault.
+- **The creator earns a fee of up to 1%** on every share created, paid in shares
+  of their own basket, never out of the vault.
 
 ```mermaid
 sequenceDiagram
@@ -39,204 +41,187 @@ sequenceDiagram
 
 ---
 
-## What is actually real here
+## Try it in two minutes
+
+Everything below runs on devnet and costs nothing.
+
+1. **Get a wallet on devnet.** Install [Phantom](https://phantom.app/download)
+   (or any Solana wallet), then switch it to devnet. In Phantom: Settings →
+   Developer settings → Testnet mode.
+2. **Get free devnet SOL** for fees at [faucet.solana.com](https://faucet.solana.com).
+   If your wallet has none, the app shows a banner with a copy-address button and
+   a link to the faucet.
+3. **Open [tessera-fund.vercel.app](https://tessera-fund.vercel.app)** and
+   connect. The market on the home page is live mainnet data.
+4. **Claim test tokens.** On [Portfolio](https://tessera-fund.vercel.app/portfolio),
+   press **Claim a starter set**, or press **Send me … of each** on any basket
+   page when you are short of a component.
+5. **Create shares in an existing basket.** Open one from
+   [Explore](https://tessera-fund.vercel.app/explore), for example
+   [The Big Five](https://tessera-fund.vercel.app/basket/6cUCq5GdhrdLGqJiy63iuc1epLFrEmAYQ45JvYEYGbg3),
+   choose how many shares, and press **Create BIG5**. The vault holdings and the
+   backing check update as soon as the transaction lands.
+6. **Redeem them** from the same panel. Every component comes back to your wallet.
+7. **Launch your own index fund.** On [Compose](https://tessera-fund.vercel.app/compose),
+   tap tiles (or pick from the Table view), drag the weights, name the token, set
+   a creator fee and press **Lay the basket**. It gets its own page and its own
+   link preview.
+
+**[Portfolio](https://tessera-fund.vercel.app/portfolio)** then looks through
+everything you hold to the companies underneath, so three baskets that all
+contain NVIDIA show up as one NVIDIA exposure.
+
+---
+
+## What is live and what runs on devnet
 
 | | |
 |---|---|
 | Prices, 24-hour moves, liquidity, holders, dividend multipliers | **Solana mainnet, live** |
-| The 28 tokenised equities being composed | **Real xStocks by Backed Finance (20) and pre-IPO PreStocks (8)** |
+| The 28 tokenised equities you can compose | **Real xStocks by Backed Finance (20) and pre-IPO PreStocks (8)** |
 | Creating and redeeming shares | **Devnet**, against mirror mints (see below) |
-| The program's arithmetic | **10 passing integration tests** |
+| The program's arithmetic | **10 integration tests, run in CI on every push** |
 
-Nothing on screen is a sample or a placeholder. Every figure in the market
-mosaic, every premium against the listed share, and every dividend-accrual number
-is read from mainnet at page load.
+Every figure in the market mosaic, every premium against the listed share and
+every dividend-accrual number is read from mainnet when the page loads.
 
-**Why creation runs on a mirror.** The 20 xStocks exist only on mainnet.
-Deploying an unaudited program that takes custody of real tokenised Apple would
-be reckless, and quoting invented prices on devnet would make every number in the
-product a lie. So the write cluster gets a faithful mirror instead: one
-Token-2022 mint per ticker, 8 decimals, a self-referential metadata pointer, and
-a `ScaledUiAmountConfig` seeded from the multiplier the real mint carries right
-now. The only difference the program can observe is who holds the mint authority,
-which is what lets the app hand a visitor test tokens. Swapping the mirror mints
-for the real ones is a change to one generated file.
+**Why settlement uses mirror mints.** The xStocks exist only on mainnet, and a
+program should hold real tokenised equities only after an audit. So devnet gets
+a faithful mirror: one Token-2022 mint per ticker, with the same 8 decimals and a
+`ScaledUiAmountConfig` seeded from the multiplier the real mint carries. The
+program cannot tell the difference. Pointing Tessera at the real mints is a
+change to one generated file.
 
 ---
 
-## Why this has to be a blockchain
+## Why Solana
 
-The claim is not that a chain is faster. It is that four things collapse into one
-transaction here and cannot collapse anywhere else: **issuing a new instrument,
-taking custody of its backing, settling the exchange, and letting anybody verify
-the backing afterwards.** A fund administrator does the first three and an auditor
-does the fourth, quarterly. Here the fourth is a `getTokenAccountBalance` call
-that anyone can make at any time, and the basket page makes it on every load.
+A blockchain lets four things happen in one transaction: **issuing a new
+instrument, taking custody of its backing, settling the exchange, and letting
+anyone verify the backing afterwards.** In traditional finance a fund
+administrator does the first three and an auditor does the fourth, once a
+quarter. Here the fourth is a balance read that anyone can make at any time, and
+every basket page makes it on every load.
 
-**Why Solana in particular**, on two counts:
+Solana in particular, for two reasons:
 
-1. **Creation and redemption are only useful if they are cheap and immediate.**
-   The mechanism that keeps a fund tracking its holdings is arbitrage between the
-   basket and its components, and that arbitrage has to settle before the gap
-   moves. Fractions of a cent per transaction are what make a hundred-dollar
-   basket worth creating at all.
-2. **Token-2022 is load-bearing, not incidental.** The tokenised equities pay
-   dividends by raising a `ScaledUiAmountConfig` multiplier on the mint rather
-   than transferring anything. A basket recipe written in *displayed* balances
-   would be short by exactly the dividends already accrued. Tessera writes
-   recipes in raw units and multiplies through the current multiplier when
-   pricing, which is why redeeming a share returns the same raw amount before
-   and after a dividend while being worth more. This is a token-extension
-   problem, and it does not exist on a chain without token extensions.
+1. **Creation and redemption have to be cheap and immediate.** Arbitrage between
+   a basket and its components is what keeps a fund tracking its holdings, and it
+   only works if it settles before prices move. Fees of a fraction of a cent make
+   a hundred-dollar basket worth creating.
+2. **Token-2022 does real work here.** Tokenised equities pay dividends by raising
+   a `ScaledUiAmountConfig` multiplier on the mint instead of transferring
+   anything. A recipe written in displayed balances would come up short by exactly
+   the dividends already accrued. Tessera stores recipes in raw units and applies
+   the live multiplier when pricing, so a share redeems for the same raw amounts
+   before and after a dividend while being worth more.
 
 ---
 
-## The three design decisions worth arguing about
+## Design decisions
 
 **In kind, so there is no price to argue with.** Creating shares means handing
-the vault the actual tokens the recipe names; redeeming means taking them back.
-The program never asks what anything is worth, so there is no oracle to go
-stale, none to be manipulated, and none to pay for. This is the same mechanism a
-real ETF uses — the difference is that the right to create and redeem normally
-belongs to a handful of authorised participants, and here it belongs to whoever
-holds the tokens. It also means redemption cannot fail for market reasons: if
-every buyer disappears, a share is still a claim on specific tokens in a specific
-vault.
+the vault the actual tokens in the recipe, and redeeming means taking them back.
+The program never asks what anything is worth, so there is no oracle to go stale,
+be manipulated or pay for. This is how a real ETF works, except that the right to
+create and redeem usually belongs to a few authorised participants. Here it
+belongs to anyone holding the tokens, and redemption works in any market,
+because a share is always a claim on specific tokens in a specific vault.
 
-**Rounding always favours the people still holding.** Amounts are integers, so
-division leaves remainders. Every deposit rounds **up** and every withdrawal
-rounds **down**. A creator pays at most one extra raw unit per component; a
-redeemer receives at most one raw unit less. The consequence is the property the
-basket page proves on every load: what the vault holds can only ever be at or
-above what the outstanding shares can claim, so **backing per share never
-falls.** Rounding dust accrues to whoever is still holding — the opposite of the
-usual arrangement where the fund keeps it.
+**Rounding always favours the holders.** Every deposit rounds **up** and every
+withdrawal rounds **down**, by at most one raw unit per component. As a result,
+what the vault holds is always at least what the outstanding shares can claim, so
+**backing per share never falls**. The basket page checks this on every load.
 
-**The creator fee comes out of shares, never the vault.** The fee is taken from
-the shares issued, not the components deposited, so the vault always receives the
-full recipe and backing per share is untouched. A creator who wants to be paid
-more has exactly one lever: get more people to create shares. They cannot dilute
-holders and cannot reach into the vault, because the program has no instruction
-that would let them.
+**The creator fee comes out of shares, never the vault.** The vault always
+receives the full recipe, so the fee cannot dilute backing. A creator earns more
+only by getting more people to create shares.
 
-### What it gives up
-
-Creating shares requires holding every component first, in the right proportions.
-That is the cost of refusing to trust a price. A router can smooth it over for
-someone paying in one currency, and the honest statement is that the primitive
-underneath is in kind and the convenience is a layer on top.
-
-Rather than claim that cost is small, every basket page measures it. **The last
-mile** panel quotes each component through Jupiter twice — dollars in, then
-straight back out — and prints the round trip. On a live eight-component basket
-that is **0.17% for one share and 0.26% for a hundred**, with the venues named per
-leg. Comparing a route against a price feed would let two disagreeing sources make
-buying look free, so the measurement is against itself. Nothing is executed;
-`lib/fill-cost.ts` is the arithmetic.
-
-The tokens themselves are issued by Backed Finance, not by Tessera. Their
-transfer hooks, permanent delegate, and pause authority are theirs. Tessera does
-not remove counterparty risk in a tokenised equity; it removes counterparty risk
-in the wrapper around it.
+**Buying a basket with dollars, measured.** Creating shares in kind means
+holding every component first. For someone starting with USDC, each basket page
+has a **last mile** panel. It quotes every component through Jupiter, dollars in
+and straight back out, and shows the round-trip cost with the venue for each leg.
+On a live eight-component basket that is **0.17% for one share and 0.26% for a
+hundred**. The panel measures the route against itself rather than against a price
+feed, so the figure is exact. The arithmetic is in `web/lib/fill-cost.ts`.
 
 ---
 
 ## Sponsor tracks
 
-### PreStocks — a second token-extension problem, solved the same way
+### PreStocks: pre-IPO companies as basket components
 
-Everything above composes xStocks. Tessera also composes **PreStocks**
-(`prestocks.com`) — Token-2022 SPVs over pre-IPO companies: Anthropic, OpenAI,
-SpaceX, Anduril, Figure AI, Kalshi, Neuralink, Polymarket. Real mainnet mints,
-real Jupiter liquidity, listed at `web/lib/prestocks.ts`.
+Tessera also composes **PreStocks** ([prestocks.com](https://prestocks.com)):
+Token-2022 SPVs over pre-IPO companies such as Anthropic, OpenAI, SpaceX, Anduril,
+Figure AI, Kalshi, Neuralink and Polymarket. They are real mainnet mints with real
+Jupiter liquidity, listed in `web/lib/prestocks.ts`.
 
-Several of these mints carry a `TransferFeeConfig` extension no xStock has:
-every transfer skims a fee at the token-program level. A recipe that deposits
-the raw amount it wants the vault to hold would under-back it by exactly that
-fee — silently, the same shape of bug `ScaledUiAmountConfig` forces you to
-avoid on the xStock side, one extension over. `gross_for_transfer_fee` in
-`programs/tessera/src/lib.rs` reads the mint's live fee schedule at deposit
-time and grosses up so the vault nets exactly the recipe amount; redemption is
-unchanged, since the fee coming out of what leaves the vault doesn't touch
-what backs anyone else's share. Covered by the ninth test, and verified live:
+Several of these mints carry a `TransferFeeConfig` extension, so every transfer
+pays a fee at the token-program level. A naive deposit would leave the vault short
+by exactly that fee. `gross_for_transfer_fee` in `programs/tessera/src/lib.rs`
+reads the mint's live fee schedule at deposit time and grosses the transfer up,
+so the vault nets exactly the recipe amount. The ninth test covers it, and it is
+verified live on devnet:
 
-- **Basket:** `5Z8XUzGVJjcYPxPZ6Hfxx8uJRNKibFcmZd7yStuSPr1p` — "Frontier Labs",
-  four PreStocks components, devnet.
-- **Creation tx:** `4jNTjhUgbGUu1eLhCXZmZrzZ8H9Mr1UXJH1stbSw1GVopVM22rdet7xHT5BTWhG6NHYtdoHn3LgHoyppkBAsBbkz`
-- On chain right now: the ANTHROPIC vault holds `513564189` raw units with
-  `2580725` withheld as fee by the token program — a ratio of exactly 50 bps
-  of the gross amount, computed by Token-2022 itself, not by Tessera.
+- **Basket:** [`5Z8XUzGVJjcYPxPZ6Hfxx8uJRNKibFcmZd7yStuSPr1p`](https://tessera-fund.vercel.app/basket/5Z8XUzGVJjcYPxPZ6Hfxx8uJRNKibFcmZd7yStuSPr1p),
+  "Frontier Labs", four PreStocks components.
+- **Creation tx:** [`4jNTjhUg…BAsbkz`](https://explorer.solana.com/tx/4jNTjhUgbGUu1eLhCXZmZrzZ8H9Mr1UXJH1stbSw1GVopVM22rdet7xHT5BTWhG6NHYtdoHn3LgHoyppkBAsBbkz?cluster=devnet)
+- **On chain:** the ANTHROPIC vault holds `513564189` raw units, with `2580725`
+  withheld as fee by Token-2022 itself: exactly 50 bps of the gross amount.
 
-`scripts/setup-mirror-prestocks.mjs` mirrors the eight mints onto the write
-cluster, transfer fee included, the way `setup-mirror.mjs` already does for
-xStocks. `/compose`, `/portfolio`, and the basket page all treat a PreStock as
-an ordinary component once it has a mirror — see `asXStock` in
-`web/lib/prestocks.ts`.
+`scripts/setup-mirror-prestocks.mjs` mirrors the eight mints onto devnet with
+their transfer fees intact. Compose, Portfolio and the basket page treat a
+PreStock like any other component.
 
-### Meteora DBC — a primary market for a basket that has none yet
+### Meteora DBC: a launch market for a new basket
 
-A brand-new basket has zero shares and no liquidity, and nobody wants to be the
-first person to assemble eight components on faith. `scripts/dbc-launch.mjs`
-opens a Meteora Dynamic Bonding Curve pool as a front-market for a real
-Tessera basket, on the real DBC program (`dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN`
-— identical address on devnet and mainnet), configured from that basket's own
-numbers rather than round ones:
+A new basket has no shares and no liquidity yet. `scripts/dbc-launch.mjs` opens a
+Meteora Dynamic Bonding Curve pool as a launch market for a real Tessera basket,
+on the real DBC program (`dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN`, the same
+address on devnet and mainnet). The pool is configured from the basket's own
+numbers:
 
-- **`initialMarketCap` / `migrationMarketCap`** are set at 0.5x and 20x the
-  basket's own stated NAV per share, converted to SOL at Jupiter's live
-  SOL/USD price at launch time — the curve opens and graduates around a
-  number Tessera already computes, not an arbitrary one.
-- **`tokenAuthorityOption: Immutable`** — the base mint gets no upgrade path,
-  the same reason a Tessera share mint has no freeze authority.
-- **Fee scheduler decays 4% → 1% over the first hour** — anti-snipe at the
-  open, settling at a rate still cheaper than assembling eight components
-  through Jupiter (`0.17-0.26%` on **the last mile**, this pool's 1% floor is
-  the cost of not having to).
-- **Migrated liquidity is 100% permanently locked**, split evenly
-  partner/creator — nobody can withdraw it later, by construction, the same
-  shape of guarantee as a Tessera vault having no withdrawal instruction a
-  creator can call.
+- **`initialMarketCap` and `migrationMarketCap`** are set at 0.5x and 20x the
+  basket's NAV per share, converted to SOL at Jupiter's live price at launch.
+- **`tokenAuthorityOption: Immutable`**, so the base mint has no upgrade path.
+- **The fee scheduler decays from 4% to 1% over the first hour**, which deters
+  snipers at the open.
+- **Migrated liquidity is 100% permanently locked**, split evenly between
+  partner and creator.
 
-Verified live on devnet, quoted in SOL, for the "Frontier Labs" PreStocks
-basket above:
+Verified live on devnet for the "Frontier Labs" basket:
 
 - **Config:** `DqxXAWXXqurghukxhZmtridTj1nBobJSHG5aSBeYD5nu`
-- **Pool:** `DAZdm2LmiDCfVQaAuVkKdK5Qa1hWmkV1fNK6SzGikqFU`
-- **Base token (Token-2022):** `4A1rSrw6PoAVHg1AUfYfxs9nQzbF2ptY86caUuoJsULV` — "Frontier Labs, early access", FRNTRA
-- **Creation tx:** `3MDHtKoBXMSmrvhAXoCGXcnS32ekQy6x5udLhyKmE3xAXEe6xLZEv5a6XFZBmmEDiaYDKmgybQ1fp9mEcua1MMgb`
-- **A real buy against it:** `38KaZPY3tSVWxtk3xX9PkAqDqeubzAYXTV24hqNkGhuC59wQKBC4yXfZeRTS65tCa2Z2LgTtWaHg7QagfjzUxAni` — 0.01 SOL in, ~4.1M of the 990M curve-side supply out, at the open of the curve.
+- **Pool:** [`DAZdm2LmiDCfVQaAuVkKdK5Qa1hWmkV1fNK6SzGikqFU`](https://explorer.solana.com/address/DAZdm2LmiDCfVQaAuVkKdK5Qa1hWmkV1fNK6SzGikqFU?cluster=devnet)
+- **Base token (Token-2022):** `4A1rSrw6PoAVHg1AUfYfxs9nQzbF2ptY86caUuoJsULV`, "Frontier Labs, early access" (FRNTRA)
+- **Creation tx:** [`3MDHtKoB…cua1MMgb`](https://explorer.solana.com/tx/3MDHtKoBXMSmrvhAXoCGXcnS32ekQy6x5udLhyKmE3xAXEe6xLZEv5a6XFZBmmEDiaYDKmgybQ1fp9mEcua1MMgb?cluster=devnet)
+- **A real buy:** [`38KaZPY3…7QagfjzUxAni`](https://explorer.solana.com/tx/38KaZPY3tSVWxtk3xX9PkAqDqeubzAYXTV24hqNkGhuC59wQKBC4yXfZeRTS65tCa2Z2LgTtWaHg7QagfjzUxAni?cluster=devnet),
+  0.01 SOL in, about 4.1M of the 990M curve supply out.
 
-This pool's token is a separate asset from a Tessera share, not a redemption
-right — linking the two (so the pool migrating funds the basket's own first
-creation) is the natural next step, not yet built.
+On the roadmap: letting the pool's migration fund the basket's first creation,
+so early buyers roll straight into redeemable shares.
 
 ---
 
 ## The program
 
-`programs/tessera/src/lib.rs`, Anchor 0.31.1. Program ID
-`F8QLTZPe9mJuPgXCbccnU9G2kMSEE4inygdUw3QZbrQ`. Its IDL is published on devnet,
-so Solana Explorer decodes every Tessera instruction by name.
+`programs/tessera/src/lib.rs`, Anchor 0.31.1, deployed on devnet at
+[`F8QLTZPe9mJuPgXCbccnU9G2kMSEE4inygdUw3QZbrQ`](https://explorer.solana.com/address/F8QLTZPe9mJuPgXCbccnU9G2kMSEE4inygdUw3QZbrQ?cluster=devnet).
+Its IDL is published on chain, so Solana Explorer decodes every Tessera
+instruction by name.
 
-Three instructions:
+| Instruction | What it does |
+|---|---|
+| `create_basket` | Validates the recipe and stores raw units per share for each component. The share mint must have 6 decimals, zero supply, no freeze authority, and the basket PDA as mint authority. The recipe can never be edited. |
+| `mint_shares` | Moves each component from the caller into the basket's own vault (rounding up), then mints shares to the caller and the creator's fee cut. |
+| `redeem_shares` | Burns shares and returns each component (rounding down). |
 
-- **`create_basket`** — validates the recipe, stores raw units per share per
-  component, and requires that the share mint has 6 decimals, zero supply, no
-  freeze authority, and the basket PDA as its mint authority. The recipe cannot
-  be edited afterwards; no instruction exists to do so.
-- **`mint_shares`** — transfers each component from the caller into the basket's
-  own associated token account, rounding up, then mints shares to the caller and
-  the creator's fee cut.
-- **`redeem_shares`** — burns shares and transfers each component back, rounding
-  down.
-
-Constants: 6 share decimals, 1 to 8 components, a 1% fee ceiling, a 32-character
-name and 10-character symbol. Vaults are checked to be the basket's own
-associated token account, so a caller cannot substitute one they control.
+Limits: 1 to 8 components, weights must sum to 100%, a creator fee of at most 1%,
+a name of up to 32 characters and a symbol of up to 10. Every vault must be the
+basket's own associated token account, so a caller cannot substitute one they
+control.
 
 ```
-$ pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 'tests/**/*.ts'
-
   tessera
     ✔ records the recipe it was given
     ✔ refuses a recipe whose weights do not add up
@@ -252,134 +237,131 @@ $ pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 'tests/**/*.ts'
   10 passing
 ```
 
-The eighth test is the one that matters most for xStocks: it raises a
-component's `ScaledUiAmountConfig` multiplier mid-test and asserts that mint
-and redeem amounts in raw units are unchanged. The ninth is its counterpart for
-PreStocks components, below.
+The eighth test raises a component's dividend multiplier mid-test and checks
+that mint and redeem amounts are unchanged. The ninth is the transfer-fee case
+for PreStocks.
 
 ---
 
 ## The app
 
-Next.js 16 App Router, React 19, Tailwind v4, `@solana/wallet-adapter`.
+Next.js 16 (App Router), React 19, Tailwind CSS v4 and the Solana wallet
+adapter, which works with any Wallet Standard wallet (Phantom, Solflare,
+Backpack and others).
 
 | Route | What it does |
 |---|---|
-| `/` | The market as a mosaic, sized by on-chain liquidity, plus the baskets that exist |
-| `/compose` | Click tiles to pick companies, drag weights, name the token, lay the basket |
-| `/explore` | Every basket, with its backing proof and premium to its own components |
-| `/basket/[address]` | One basket: recipe, vault contents, backing check, mint and redeem, and what buying the components costs |
-| `/portfolio` | What you hold, what it is worth, and what it would redeem for |
-| `/method` | The document behind the product, including what it gives up |
+| `/` | The live market as a mosaic sized by on-chain liquidity, plus the baskets that exist |
+| `/compose` | Pick companies, set weights, name the token and launch the basket |
+| `/explore` | Every basket, with its backing proof and its premium to its own components |
+| `/basket/[address]` | One basket: recipe, vault contents, backing check, create and redeem, and the cost of buying in with dollars |
+| `/portfolio` | What you hold, what it is worth, and the companies underneath |
+| `/method` | How it works and the reasoning behind each design choice |
 
-Two API routes: `/api/market` batches the mainnet reads (prices via Jupiter,
-supply and multipliers via `getMultipleAccounts`) behind a short cache, and
-`/api/faucet` hands mirror tokens to a wallet so the mint flow can be tried
-without owning tokenised Apple.
+Two API routes:
+- `/api/market` batches the mainnet reads (Jupiter prices, plus supply and
+  multipliers through `getMultipleAccounts`) behind a short shared cache.
+- `/api/faucet` sends mirror tokens to a wallet so anyone can try creation
+  without owning tokenised stocks.
 
-Design notes worth knowing if you are reading the code:
-
-- **Both treemaps label only what fits.** SVG text has nothing to clip it, so
-  `fitsTile()` in `lib/treemap.ts` length-tests a string against its tile before
-  the label is drawn. `GOOGL` used to render straight across its neighbour.
-- **The 1232-byte packet limit shapes `lib/tx.ts`.** `packSteps` measures each
-  compiled message and splits creation across two signatures when a basket has
-  enough components to overflow one transaction. An 8-component create measures
-  1260 bytes; a 1-component create measures 734.
-- **Colour is validated, not eyeballed.** The diverging scale for 24-hour moves
-  was generated by `scripts/build-diverging.mjs` and checked for a worst-case
-  colour-vision separation of 8.1 in OKLab.
+Other details:
+- **Transactions are sized to fit.** Solana caps a transaction at 1232 bytes.
+  `packSteps` in `web/lib/tx.ts` measures each compiled message and splits an
+  eight-component creation across two signatures when needed.
+- **Accessible colour.** The red-to-green scale for 24-hour moves is generated by
+  `scripts/build-diverging.mjs` and checked to stay distinguishable under common
+  colour-vision deficiencies.
+- **Lighthouse:** 100 for accessibility, best practices and SEO on every page.
+- **Link previews.** Every basket gets its own preview card with its live price and
+  holdings, drawn on the server.
 
 ---
 
-## Running it
+## Run it yourself
 
-Requires Node 22+, pnpm, Rust, the Solana CLI (Agave 4.x) and Anchor 0.31.1.
+### Option 1: the app against the live devnet program (about 2 minutes)
+
+The repository already points at the deployed program and its devnet mirror mints.
+
+Requires Node 22+ and pnpm.
 
 ```bash
+git clone https://github.com/RohanGlitched/Tessera.git
+cd Tessera/web
 pnpm install
-cd web && pnpm install && cd ..
-
-# 1. A local validator, with the program loaded.
-solana-test-validator --reset &
-anchor build && anchor deploy --provider.cluster localnet
-
-# 2. Build the mirror mints and generate web/lib/mirror.generated.ts.
-#    Reads the live multipliers from mainnet, so this needs network access.
-node scripts/setup-mirror.mjs
-
-# 3. Optional: a few baskets to look at.
-node scripts/seed-baskets.mjs
-
-# 4. Configure and run the app.
-cp web/.env.example web/.env.local   # then fill in FAUCET_SECRET_KEY
-cd web && pnpm build && pnpm start
+cp .env.example .env.local
+pnpm build && pnpm start          # http://localhost:3000
 ```
 
-To settle on devnet instead of a local validator, one script does the whole
-cutover — deploy, mirror mints, seed baskets, and print the three environment
-variables to change:
+Everything works locally except the test-token faucet, which needs the mirror
+mints' authority key. To get test tokens, claim them once on the
+[hosted app](https://tessera-fund.vercel.app/portfolio). They land in your wallet
+and work locally as well.
+
+### Option 2: run the program tests
+
+Requires Rust, the Solana CLI (Agave 4.x) and Anchor 0.31.1. This is the same job
+CI runs.
 
 ```bash
+pnpm install                        # at the repository root
+solana-keygen new --no-bip39-passphrase   # skip if you already have ~/.config/solana/id.json
+anchor keys sync                    # use a program ID your machine holds the key for
+anchor test                         # starts a local validator, deploys, runs all 10 tests
+```
+
+`anchor keys sync` rewrites the program ID in `lib.rs` and `Anchor.toml` to your
+own key. Run `git checkout programs Anchor.toml` afterwards to return to the
+deployed ID.
+
+### Option 3: deploy your own copy to devnet
+
+```bash
+anchor keys sync
 ./scripts/go-devnet.sh
+node scripts/setup-mirror-prestocks.mjs --url devnet   # optional: the PreStocks mirrors
 ```
 
-It needs about 3 SOL on the deploy wallet for a 280 KB program plus 20
-Token-2022 mints. The devnet faucet rate-limits by IP, so if the script stops at
-the balance check, fund the address it prints at
-[faucet.solana.com](https://faucet.solana.com) and run it again.
+The script builds and deploys the program, creates the mirror mints (regenerating
+`web/lib/mirror.generated.ts`), seeds a few baskets, and moves mint authority to
+a separate faucet key. It writes `FAUCET_SECRET_KEY` into `web/.env.local`, so
+your copy's faucet works, and prints the program ID to set there.
 
-Its last step matters for anyone hosting this. Until then the deploy wallet is the
-mirror mints' mint authority, and the faucet route needs that authority's secret
-key — which would mean putting a wallet that also holds the program's upgrade
-authority into a hosting dashboard. `scripts/split-faucet-key.mjs` hands the mints
-to a key that controls nothing else, so the only secret a deployment needs is one
-that can mint twenty stand-ins on a test cluster.
+It needs about 3 SOL of devnet SOL on the deploy wallet. If the balance check
+stops it, fund the printed address at [faucet.solana.com](https://faucet.solana.com)
+and run it again. Every step is idempotent, and `scripts/lib/rpc.mjs` retries only
+failures that prove a transaction never executed, so an interrupted run can simply
+be restarted.
 
-Both setup scripts run dozens of transactions against a public endpoint that
-answers a run like that with 429s, and a long enough burst of those outlives the
-blockhash the transaction was signed against. `scripts/lib/rpc.mjs` is the retry
-layer, and it is deliberately narrow about what it will retry: only failures that
-prove the transaction never executed. Notably not `block height exceeded`, because
-a transaction that expired in flight may still have landed, and a second
-`mint_shares` is not a no-op. Every step is also idempotent, so an interrupted run
-is finished by running it again.
-
-Run the program tests against a running validator with:
-
-```bash
-ANCHOR_PROVIDER_URL=http://127.0.0.1:8899 \
-ANCHOR_WALLET=~/.config/solana/id.json \
-NODE_OPTIONS=--no-experimental-strip-types \
-pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 'tests/**/*.ts'
-```
-
-> **Note on `next dev`:** the dev server does not hydrate in some WSL setups.
-> Verify against `pnpm build && pnpm start` if the page renders but nothing
-> responds to a click.
+To use a local validator instead, run `solana-test-validator --reset`, then
+`anchor deploy --provider.cluster localnet`, `node scripts/setup-mirror.mjs` and
+`node scripts/seed-baskets.mjs`. Set `NEXT_PUBLIC_WRITE_CLUSTER=localnet` in
+`web/.env.local`.
 
 ---
 
-## Layout
+## Repository layout
 
 ```
-programs/tessera/src/lib.rs   the program: create, mint, redeem
-tests/tessera.ts              10 integration tests, including the dividend and fee cases
-web/lib/prestocks.ts          the 8 PreStocks pre-IPO mints
-scripts/setup-mirror.mjs      creates the xStock mirror mints, writes mirror.generated.ts
-scripts/setup-mirror-prestocks.mjs   the same, for PreStocks, transfer fee included
-scripts/seed-baskets.mjs      a few baskets to look at
-scripts/dbc-launch.mjs        opens a Meteora DBC pool sized from a basket's own NAV
-scripts/split-faucet-key.mjs  moves mint authority off the deploy wallet
-scripts/lib/rpc.mjs           what is safe to retry against a throttled endpoint
-scripts/lib/color.mjs         OKLCH, colour-vision simulation, palette checks
-scripts/gen-universe.mjs      regenerates web/lib/universe.ts from mainnet
-scripts/build-diverging.mjs   generates and validates the 24h-move colour scale
-web/                          the Next.js app
+programs/tessera/src/lib.rs          the program: create, mint, redeem
+tests/tessera.ts                     10 integration tests, including the dividend and fee cases
+web/                                 the Next.js app
+web/lib/prestocks.ts                 the 8 PreStocks pre-IPO mints
+web/lib/mirror.generated.ts          mainnet mint → devnet mirror mint, per ticker
+scripts/go-devnet.sh                 one-command devnet deployment
+scripts/setup-mirror.mjs             creates the xStock mirror mints
+scripts/setup-mirror-prestocks.mjs   the same for PreStocks, transfer fee included
+scripts/seed-baskets.mjs             a few example baskets
+scripts/dbc-launch.mjs               opens a Meteora DBC pool sized from a basket's NAV
+scripts/split-faucet-key.mjs         moves mint authority off the deploy wallet
+scripts/lib/rpc.mjs                  safe retries against a rate-limited RPC
+scripts/gen-universe.mjs             regenerates web/lib/universe.ts from mainnet
+scripts/build-diverging.mjs          generates and checks the 24-hour-move colour scale
 ```
 
 ---
 
 Not investment advice, and not an offer to sell anything. Tokenised equities are
-issued by Backed Finance; Tessera neither issues nor custodies them beyond the
-program vault a basket writes to.
+issued by Backed Finance and PreStocks, and their token controls remain with
+those issuers. Tessera does not issue or custody them beyond the vault a basket
+writes to.
