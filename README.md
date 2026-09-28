@@ -8,34 +8,40 @@
 
 ![Tessera: the live market mosaic of tokenised equities](.github/readme/home.png)
 
-An index fund is two things: a list of companies and a set of weights. Tessera
-turns those two things into a token.
+An index fund is a list of companies and a set of weights. Tessera turns that
+list into one token, backed share for share by real tokenised stocks in a vault
+anyone can read.
 
-Pick up to eight tokenised equities (xStocks such as Apple, NVIDIA and Tesla, or
-pre-IPO PreStocks such as OpenAI, Anthropic and SpaceX), set their weights, and
-Tessera writes that recipe into a Solana program. The program becomes the only
-authority over a new share token. From then on:
+## How it works
 
-- **One share is a claim on exact quantities of real tokens** held in a vault
-  that anyone can read.
-- **Anyone can create shares** by depositing the components, and **anyone can
-  redeem** by burning shares and taking the components back.
-- **No oracle, no manager, no edit button.** The recipe is fixed at creation, and
-  the program has no instruction that lets the creator touch the vault.
-- **The creator earns a fee of up to 1%** on every share created, paid in shares
-  of their own basket, never out of the vault.
+A basket goes through four stages, and each one runs on a different part of Solana.
 
 ```mermaid
-sequenceDiagram
-  participant C as Creator
-  participant P as Tessera program
-  participant H as Holder
-  C->>P: create_basket (recipe, fee)
-  H->>P: mint_shares: hand the vault every component
-  P-->>H: shares, plus the creator's fee cut in shares
-  H->>P: redeem_shares: burn shares
-  P-->>H: every component back out of the vault
+flowchart LR
+  A["1 · Write the recipe<br/>Tessera program"] --> B["2 · Open a market<br/>Meteora DBC"]
+  B --> C["3 · Create shares in kind<br/>Token-2022 vault"]
+  C --> D["4 · Hold one token<br/>any Solana wallet"]
+  D -. redeem .-> C
+  B -. graduates .-> E["Locked Meteora<br/>DAMM v2 pool"]
 ```
+
+1. **Write the recipe.** Pick up to eight tokenised equities: xStocks such as
+   Apple, NVIDIA and Tesla, or PreStocks SPVs over OpenAI, Anthropic and SpaceX.
+   `create_basket` stores the exact raw units per share and makes the program
+   the only mint authority of a new share token. The recipe can never be edited.
+2. **Open a market.** A new basket has no holders, and nobody wants to be the
+   first to assemble every component. A Meteora Dynamic Bonding Curve opens in
+   front of it, priced from the basket's own NAV: it starts at 0.5x and
+   graduates at 20x into a Meteora DAMM v2 pool with all liquidity locked. The
+   live one is on the [home page](https://www.teserra.world/#launch), and you
+   can buy on it from there.
+3. **Create shares in kind.** `mint_shares` moves exactly the components the
+   recipe names into the vault, and `redeem_shares` hands exactly that back. No
+   oracle is read, so there is no price to push. PreStocks transfer fees are
+   grossed up, so the vault never ends up short.
+4. **Hold one token.** The share is an ordinary Token-2022 mint that transfers,
+   sits in any wallet and can be sold. The creator earns up to 1% of every
+   creation, paid in new shares and never out of the vault.
 
 ![A basket page: recipe, vault holdings and net asset value](.github/readme/basket.png)
 
@@ -53,16 +59,19 @@ Everything below runs on devnet and costs nothing.
    a link to the faucet.
 3. **Open [teserra.world](https://www.teserra.world)** and
    connect. The market on the home page is live mainnet data.
-4. **Claim test tokens.** On [Portfolio](https://www.teserra.world/portfolio),
+4. **Buy on the launch curve.** In the Meteora section of the
+   [home page](https://www.teserra.world/#launch), pick an amount and press
+   **Buy FRNTRA**. The dot on the curve moves with your buy.
+5. **Claim test tokens.** On [Portfolio](https://www.teserra.world/portfolio),
    press **Claim a starter set**, or press **Send me … of each** on any basket
    page when you are short of a component.
-5. **Create shares in an existing basket.** Open one from
+6. **Create shares in an existing basket.** Open one from
    [Explore](https://www.teserra.world/explore), for example
    [The Big Five](https://www.teserra.world/basket/6cUCq5GdhrdLGqJiy63iuc1epLFrEmAYQ45JvYEYGbg3),
    choose how many shares, and press **Create BIG5**. The vault holdings and the
    backing check update as soon as the transaction lands.
-6. **Redeem them** from the same panel. Every component comes back to your wallet.
-7. **Launch your own index fund.** On [Compose](https://www.teserra.world/compose),
+7. **Redeem them** from the same panel. Every component comes back to your wallet.
+8. **Launch your own index fund.** On [Compose](https://www.teserra.world/compose),
    tap tiles (or pick from the Table view), drag the weights, name the token, set
    a creator fee and press **Lay the basket**. It gets its own page and its own
    link preview.
@@ -198,6 +207,11 @@ Verified live on devnet for the "Frontier Labs" basket:
 - **A real buy:** [`38KaZPY3…7QagfjzUxAni`](https://explorer.solana.com/tx/38KaZPY3tSVWxtk3xX9PkAqDqeubzAYXTV24hqNkGhuC59wQKBC4yXfZeRTS65tCa2Z2LgTtWaHg7QagfjzUxAni?cluster=devnet),
   0.01 SOL in, about 4.1M of the 990M curve supply out.
 
+The home page reads the pool and config accounts directly (`readDbcState` in
+`web/lib/dbc.ts`), draws the curve from them, and builds buys with the Meteora
+SDK (`web/components/launch-market.tsx`), so anyone with a devnet wallet can
+trade on it without leaving Tessera.
+
 On the roadmap: letting the pool's migration fund the basket's first creation,
 so early buyers roll straight into redeemable shares.
 
@@ -251,7 +265,7 @@ Backpack and others).
 
 | Route | What it does |
 |---|---|
-| `/` | The live market as a mosaic sized by on-chain liquidity, plus the baskets that exist |
+| `/` | The live market as a mosaic sized by on-chain liquidity, the life of a basket, the Meteora launch curve you can buy on, and the baskets that exist |
 | `/compose` | Pick companies, set weights, name the token and launch the basket |
 | `/explore` | Every basket, with its backing proof and its premium to its own components |
 | `/basket/[address]` | One basket: recipe, vault contents, backing check, create and redeem, and the cost of buying in with dollars |

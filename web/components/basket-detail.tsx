@@ -21,6 +21,7 @@ import {
 import { symbolForWriteMint } from "@/lib/mirror";
 import { PRESTOCK_SYMBOLS, BY_SYMBOL_PRESTOCKS } from "@/lib/prestocks";
 import { dbcPoolFor } from "@/lib/dbc";
+import { LaunchCard } from "./launch-market";
 import { explorerAddress, explorerTx } from "@/lib/config";
 import { slotColor } from "@/lib/palette";
 import {
@@ -328,14 +329,14 @@ function DbcPanel({
         This basket has an early-access market
       </h2>
       <p className="mt-3 max-w-[62ch] text-sm leading-relaxed text-ivory-dim">
-        {pool.baseSymbol} trades against {pool.quoteSymbol} on a Dynamic
-        Bonding Curve pool, opened by Tessera and sized off this basket&rsquo;s
-        own NAV — the curve&rsquo;s opening and migration market caps are set
-        at a multiple of {symbol}&rsquo;s stated value in {pool.quoteSymbol},
-        not a round number picked out of the air. It is a separate token, not
-        a redemption right into {symbol}: buying it is a bet on the basket
-        without first assembling every component.
+        {pool.baseSymbol} is a separate token priced off {symbol}&rsquo;s NAV:
+        the curve opens at half of it and graduates at twenty times, into a
+        Meteora DAMM v2 pool with its liquidity locked. It is a bet on the
+        basket, not a redemption right into it.
       </p>
+      <div className="mt-6">
+        <LaunchCard onBasketPage />
+      </div>
       <p className="tnum mt-4 flex flex-wrap gap-x-6 gap-y-1 text-xs text-ivory-faint">
         <a
           href={explorerAddress(pool.pool)}

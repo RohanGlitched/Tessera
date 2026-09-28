@@ -2,6 +2,35 @@ import Link from "next/link";
 import { HomeMosaic, HomeStats, ComposeCta } from "@/components/home-mosaic";
 import { MarketClock } from "@/components/market-clock";
 import { FeaturedBaskets } from "@/components/featured-baskets";
+import { LaunchMarket } from "@/components/launch-market";
+
+const LIFE = [
+  {
+    n: "1",
+    title: "Write the recipe",
+    on: "Tessera program",
+    body: "Pick up to eight tokenised equities, xStocks or PreStocks SPVs over OpenAI, Anthropic and SpaceX, and weigh them. The program stores the exact raw units per share and gives up the power to change them.",
+  },
+  {
+    n: "2",
+    title: "Open a market",
+    on: "Meteora DBC",
+    body: "A basket with no holders has no market. A bonding curve priced from the basket's own NAV lets people buy in before anyone has assembled a share, then graduates into a locked Meteora pool.",
+    href: "#launch",
+  },
+  {
+    n: "3",
+    title: "Create shares in kind",
+    on: "Token-2022 vault",
+    body: "A share is minted by handing the vault exactly what the recipe names and redeemed by taking exactly that back. No oracle is read, so there is no price to push. PreStocks transfer fees are grossed up, so the vault never falls short.",
+  },
+  {
+    n: "4",
+    title: "Hold one token",
+    on: "Any Solana wallet",
+    body: "The share is an ordinary Token-2022 mint: it transfers, sits in a wallet and can be sold. Dividends on the components accrue to the vault, and so to every holder. The creator earns a fee in shares on every creation.",
+  },
+];
 
 export default function Home() {
   return (
@@ -9,6 +38,14 @@ export default function Home() {
       {/* ------------------------------------------------------------- hero */}
       <section className="grid gap-12 pt-14 pb-16 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-14 lg:pt-20">
         <div className="max-w-[34rem] self-center">
+          <Link
+            href="#launch"
+            className="mb-7 inline-flex items-center gap-2.5 border border-gold/40 px-3 py-1.5 text-xs text-ivory-dim transition-colors hover:border-gold hover:text-ivory"
+          >
+            <span className="size-1.5 shrink-0 rounded-full bg-gain" aria-hidden />
+            Live on devnet: a basket trading on a Meteora bonding curve
+            <span aria-hidden>↓</span>
+          </Link>
           <h1 className="display text-hero text-ivory">
             An index fund is a list of companies and a set of weights.
           </h1>
@@ -44,8 +81,51 @@ export default function Home() {
         <HomeStats />
       </section>
 
+      {/* ------------------------------------------------------- lifecycle */}
+      <section className="py-20">
+        <h2 className="display text-title max-w-[26ch] text-ivory">
+          From a recipe to a market, and none of it trusts us.
+        </h2>
+        <ol className="mt-12 grid gap-px bg-rule sm:grid-cols-2 lg:grid-cols-4">
+          {LIFE.map((step) => (
+            <li key={step.title} className="flex flex-col bg-ground-deep p-7">
+              <p className="flex items-baseline justify-between gap-3 text-xs">
+                <span className="tnum text-gold">{step.n}</span>
+                <span className="text-ivory-faint">{step.on}</span>
+              </p>
+              <h3 className="display mt-3 text-xl text-ivory">{step.title}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-ivory-dim">{step.body}</p>
+              {step.href && (
+                <Link
+                  href={step.href}
+                  className="mt-auto pt-4 text-sm text-gold underline decoration-gold/40 underline-offset-4 hover:decoration-gold"
+                >
+                  See the live one
+                </Link>
+              )}
+            </li>
+          ))}
+        </ol>
+        <p className="mt-8 max-w-[62ch] text-sm leading-relaxed text-ivory-faint">
+          Deposits round up and redemptions round down, so every rounding remainder
+          stays in the vault. The vault can therefore only ever hold more than the
+          outstanding shares claim, never less.{" "}
+          <Link
+            href="/method"
+            className="text-ivory-dim underline decoration-rule-bright underline-offset-4 hover:text-ivory"
+          >
+            How the program is built
+          </Link>
+        </p>
+      </section>
+
+      {/* ---------------------------------------------------------- launch */}
+      <section id="launch" className="scroll-mt-24 border-t border-rule py-20">
+        <LaunchMarket />
+      </section>
+
       {/* ------------------------------------------------------- two clocks */}
-      <section className="grid gap-10 py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-16">
+      <section className="grid gap-10 border-t border-rule py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-16">
         <div className="max-w-[38ch] self-center">
           <h2 className="display text-title text-ivory">
             The exchange keeps hours. Your basket does not.
@@ -64,51 +144,6 @@ export default function Home() {
         <div className="self-center">
           <MarketClock />
         </div>
-      </section>
-
-      {/* -------------------------------------------------------- mechanics */}
-      <section className="border-t border-rule py-20">
-        <h2 className="display text-title max-w-[24ch] text-ivory">
-          Three steps, and none of them trust us.
-        </h2>
-        <ol className="mt-12 grid gap-px bg-rule md:grid-cols-3">
-          {[
-            {
-              n: "First",
-              title: "Write the recipe",
-              body: "Choose up to eight tokenised equities and a weight for each. Tessera turns the weights into an exact number of raw token units per share, at the prices on screen, and writes that recipe into a program account. It never changes again.",
-            },
-            {
-              n: "Then",
-              title: "Create shares in kind",
-              body: "To mint one share you hand the vault exactly what the recipe names. To redeem one you take exactly that back. No price is consulted, so no price can be manipulated to mint a share cheaply.",
-            },
-            {
-              n: "After",
-              title: "Hold one thing",
-              body: "Your basket is a Token-2022 mint like any other. It transfers, it sits in a wallet, it can be sold. Dividends on the components keep accruing to the vault, which means they keep accruing to every holder.",
-            },
-          ].map((step) => (
-            <li key={step.title} className="bg-ground-deep p-7">
-              <span className="text-xs tracking-wide text-gold">{step.n}</span>
-              <h3 className="display mt-3 text-xl text-ivory">{step.title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-ivory-dim">
-                {step.body}
-              </p>
-            </li>
-          ))}
-        </ol>
-        <p className="mt-8 max-w-[62ch] text-sm leading-relaxed text-ivory-faint">
-          Deposits round up and redemptions round down, so every rounding remainder
-          stays in the vault. The vault can therefore only ever hold more than the
-          outstanding shares claim, never less.{" "}
-          <Link
-            href="/method"
-            className="text-ivory-dim underline decoration-rule-bright underline-offset-2 hover:text-ivory"
-          >
-            How the program is built
-          </Link>
-        </p>
       </section>
 
       {/* -------------------------------------------------------- baskets */}

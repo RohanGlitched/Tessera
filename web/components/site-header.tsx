@@ -10,6 +10,7 @@ const NAV = [
   { href: "/compose", label: "Compose" },
   { href: "/explore", label: "Explore" },
   { href: "/portfolio", label: "Portfolio" },
+  { href: "/method", label: "How it works" },
 ];
 
 export function SiteHeader() {
@@ -57,7 +58,7 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {/* The same three destinations, laid as tiles across the full width. */}
+      {/* The same destinations, laid as tiles across the full width. */}
       <nav className="flex border-t border-rule text-sm sm:hidden">
         {NAV.map((item) => {
           const active =
