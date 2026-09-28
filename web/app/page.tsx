@@ -43,7 +43,7 @@ export default function Home() {
             className="mb-7 inline-flex items-center gap-2.5 border border-gold/40 px-3 py-1.5 text-xs text-ivory-dim transition-colors hover:border-gold hover:text-ivory"
           >
             <span className="size-1.5 shrink-0 rounded-full bg-gain" aria-hidden />
-            Live on devnet: a basket trading on a Meteora bonding curve
+            Live now: a basket trading on a Meteora bonding curve
             <span aria-hidden>↓</span>
           </Link>
           <h1 className="display text-hero text-ivory">

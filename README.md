@@ -209,8 +209,8 @@ Verified live on devnet for the "Frontier Labs" basket:
 
 The home page reads the pool and config accounts directly (`readDbcState` in
 `web/lib/dbc.ts`), draws the curve from them, and builds buys with the Meteora
-SDK (`web/components/launch-market.tsx`), so anyone with a devnet wallet can
-trade on it without leaving Tessera.
+SDK (`web/components/launch-market.tsx`), so anyone with a wallet can trade on it
+without leaving Tessera.
 
 On the roadmap: letting the pool's migration fund the basket's first creation,
 so early buyers roll straight into redeemable shares.

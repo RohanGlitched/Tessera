@@ -42,9 +42,9 @@ export function LaunchMarket() {
           and graduates into a permanent Meteora pool at twenty times it.
         </p>
         <p className="mt-4 text-sm leading-relaxed text-ivory-faint">
-          This one stands in front of the Frontier Labs basket. Buy a little with
-          devnet SOL and the dot moves: every figure here is read from the pool
-          account on each load.
+          This one stands in front of the Frontier Labs basket. Buy a little and the
+          dot moves: every figure here is read from the pool account on each
+          load.
         </p>
       </div>
       <LaunchCard />
@@ -149,7 +149,7 @@ export function LaunchCard({ onBasketPage = false }: { onBasketPage?: boolean })
         </p>
         <p className="flex items-center gap-2 text-xs text-ivory-faint">
           <span className="size-1.5 rounded-full bg-gain" aria-hidden />
-          {state?.migrated ? "Graduated" : "Live on devnet"}
+          {state?.migrated ? "Graduated" : "Trading live"}
         </p>
       </div>
 
@@ -216,7 +216,7 @@ export function LaunchCard({ onBasketPage = false }: { onBasketPage?: boolean })
           <div className="flex flex-wrap items-center gap-4">
             <ConnectButton />
             <p className="text-xs text-ivory-faint">
-              Connect a wallet on devnet to buy on the curve.
+              Connect a wallet to buy on the curve.
             </p>
           </div>
         )}
@@ -292,7 +292,7 @@ function Curve({ state, error }: { state: DbcState | null; error: string | null 
         <CurvePlot state={state} W={width} />
       ) : (
         <p className="flex h-full items-center justify-center px-6 text-center text-xs text-ivory-faint">
-          {error ?? "Reading the pool from devnet"}
+          {error ?? "Reading the pool"}
         </p>
       )}
     </div>
