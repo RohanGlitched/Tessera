@@ -1,6 +1,5 @@
 import {
   Connection,
-  Keypair,
   PublicKey,
   Transaction,
   sendAndConfirmTransaction,
@@ -11,7 +10,7 @@ import {
   createMintToInstruction,
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
-import bs58 from "bs58";
+import { clientIp, faucetKeypair } from "@/lib/faucet-server";
 import { WRITE_RPC, WRITE_CLUSTER } from "@/lib/config";
 import { COMPOSABLE, FAUCET_TOKENS_PER_CLAIM, writeMint } from "@/lib/mirror";
 
@@ -39,13 +38,6 @@ const IP_WINDOW_MS = 10 * 60_000;
 const IP_MAX_CLAIMS = 6;
 const claimsByIp = new Map<string, number[]>();
 
-function clientIp(request: Request): string {
-  return (
-    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    request.headers.get("x-real-ip") ||
-    "unknown"
-  );
-}
 
 function recentClaims(ip: string): number[] {
   const now = Date.now();
@@ -54,18 +46,6 @@ function recentClaims(ip: string): number[] {
   return recent;
 }
 
-function faucetKeypair(): Keypair | null {
-  const secret = process.env.FAUCET_SECRET_KEY;
-  if (!secret) return null;
-  try {
-    if (secret.trim().startsWith("[")) {
-      return Keypair.fromSecretKey(Uint8Array.from(JSON.parse(secret)));
-    }
-    return Keypair.fromSecretKey(bs58.decode(secret.trim()));
-  } catch {
-    return null;
-  }
-}
 
 export async function POST(request: Request) {
   const keypair = faucetKeypair();

@@ -20,8 +20,7 @@ import {
 } from "@/lib/tx";
 import { symbolForWriteMint } from "@/lib/mirror";
 import { PRESTOCK_SYMBOLS, BY_SYMBOL_PRESTOCKS } from "@/lib/prestocks";
-import { dbcPoolFor } from "@/lib/dbc";
-import { LaunchCard } from "./launch-market";
+import { BasketLaunch } from "./launch-market";
 import { explorerAddress, explorerTx } from "@/lib/config";
 import { slotColor } from "@/lib/palette";
 import {
@@ -268,7 +267,7 @@ function Loaded({
       </div>
       </div>
 
-      <DbcPanel basketAddress={basket.address} symbol={basket.symbol} />
+      <BasketLaunch basket={basket} navUsd={valuation.nav} />
 
       {/* What it should hold, beside what it does hold. `min-w-0` on the tracks,
           because a grid item defaults to min-content and the tables inside carry a
@@ -301,69 +300,6 @@ function Loaded({
         </div>
       </div>
     </div>
-  );
-}
-
-// --------------------------------------------------------------------- DBC
-
-/**
- * This basket also has a primary market on Meteora's Dynamic Bonding Curve —
- * a separate token, not a redemption right, opened by scripts/dbc-launch.mjs
- * and sized off this basket's own NAV rather than round numbers. Shown only
- * for the one basket it exists for; see web/lib/dbc.ts.
- */
-function DbcPanel({
-  basketAddress,
-  symbol,
-}: {
-  basketAddress: string;
-  symbol: string;
-}) {
-  const pool = dbcPoolFor(basketAddress);
-  if (!pool) return null;
-
-  return (
-    <section className="mt-12 border border-gold/40 bg-ground-raised px-6 py-6">
-      <p className="text-xs tracking-wide text-gold">Meteora DBC</p>
-      <h2 className="display mt-2 text-xl text-ivory">
-        This basket has an early-access market
-      </h2>
-      <p className="mt-3 max-w-[62ch] text-sm leading-relaxed text-ivory-dim">
-        {pool.baseSymbol} is a separate token priced off {symbol}&rsquo;s NAV:
-        the curve opens at half of it and graduates at twenty times, into a
-        Meteora DAMM v2 pool with its liquidity locked. It is a bet on the
-        basket, not a redemption right into it.
-      </p>
-      <div className="mt-6">
-        <LaunchCard onBasketPage />
-      </div>
-      <p className="tnum mt-4 flex flex-wrap gap-x-6 gap-y-1 text-xs text-ivory-faint">
-        <a
-          href={explorerAddress(pool.pool)}
-          target="_blank"
-          rel="noreferrer"
-          className="underline decoration-rule-bright underline-offset-4 hover:text-ivory-dim"
-        >
-          Pool {shortAddress(pool.pool, 6, 6)}
-        </a>
-        <a
-          href={explorerAddress(pool.config)}
-          target="_blank"
-          rel="noreferrer"
-          className="underline decoration-rule-bright underline-offset-4 hover:text-ivory-dim"
-        >
-          Config {shortAddress(pool.config, 6, 6)}
-        </a>
-        <a
-          href={explorerAddress(pool.baseMint)}
-          target="_blank"
-          rel="noreferrer"
-          className="underline decoration-rule-bright underline-offset-4 hover:text-ivory-dim"
-        >
-          {pool.baseSymbol} mint {shortAddress(pool.baseMint, 6, 6)}
-        </a>
-      </p>
-    </section>
   );
 }
 

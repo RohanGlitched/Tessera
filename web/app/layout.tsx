@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { WalletProvider } from "@/components/wallet-provider";
 import { MarketProvider } from "@/components/market-provider";
+import { SITE_URL } from "@/lib/config";
 
 /**
  * Fraunces for anything that speaks, Archivo for anything that counts.
@@ -29,7 +30,7 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.teserra.world"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Tessera — index funds anyone can lay",
     template: "%s · Tessera",

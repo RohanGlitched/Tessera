@@ -8,6 +8,8 @@
  * figure on screen stays real.
  */
 
+export const SITE_URL = "https://www.teserra.world";
+
 export const MAINNET_RPC =
   process.env.NEXT_PUBLIC_MAINNET_RPC ?? "https://api.mainnet-beta.solana.com";
 

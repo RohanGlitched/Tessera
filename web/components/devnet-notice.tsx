@@ -15,7 +15,8 @@ export function DevnetNotice() {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
   const [balance, setBalance] = useState<{ owner: string; lamports: number } | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!publicKey || WRITE_CLUSTER !== "devnet") return;
@@ -42,35 +43,53 @@ export function DevnetNotice() {
     return null;
   }
 
-  async function copy() {
-    await navigator.clipboard.writeText(publicKey!.toBase58());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  async function fund() {
+    setBusy(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/faucet/sol", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ owner: publicKey!.toBase58() }),
+      });
+      const body = (await response.json()) as { signature?: string; error?: string };
+      if (!response.ok || !body.signature) {
+        setError(body.error ?? "The faucet did not answer.");
+        return;
+      }
+      setBalance({ owner: publicKey!.toBase58(), lamports: await connection.getBalance(publicKey!) });
+    } catch {
+      setError("Could not reach the faucet.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
     <div role="status" className="border-b border-gold/30 bg-gold/[0.07]">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-5 py-3 text-sm sm:px-8 md:flex-row md:items-center md:gap-6">
         <p className="leading-relaxed text-ivory-dim md:flex-1">
-          <span className="text-ivory">Tessera settles on devnet, and this wallet has no devnet SOL.</span>{" "}
-          Switch your wallet&apos;s network to devnet (Phantom: Settings, Developer
-          settings, Testnet mode), then get free SOL from the Solana faucet.
+          <span className="text-ivory">This wallet has no test SOL yet.</span> Tessera runs on
+          Solana devnet while it is in testing, so trying it is free: one click sends enough to
+          lay a basket, create shares and open a launch market.
+          {error && <span className="mt-1 block text-loss">{error}</span>}
         </p>
-        <div className="flex shrink-0 gap-3">
+        <div className="flex shrink-0 flex-wrap items-center gap-3">
           <button
             type="button"
-            onClick={copy}
-            className="border border-rule-bright px-4 py-2 text-xs text-ivory transition-colors hover:border-gold hover:text-gold"
+            onClick={fund}
+            disabled={busy}
+            className="border border-gold bg-gold px-4 py-2 text-xs text-ground-deep transition-colors hover:bg-[#c79a2e] disabled:opacity-60"
           >
-            {copied ? "Copied" : "Copy my address"}
+            {busy ? "Sending…" : "Get free test SOL"}
           </button>
           <a
             href="https://faucet.solana.com"
             target="_blank"
             rel="noreferrer"
-            className="border border-gold/60 px-4 py-2 text-xs text-gold transition-colors hover:border-gold hover:bg-gold/10"
+            className="text-xs text-ivory-faint underline decoration-rule-bright underline-offset-4 hover:text-ivory-dim"
           >
-            Open faucet.solana.com
+            or faucet.solana.com
           </a>
         </div>
       </div>

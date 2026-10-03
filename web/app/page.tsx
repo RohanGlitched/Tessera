@@ -15,7 +15,7 @@ const LIFE = [
     n: "2",
     title: "Open a market",
     on: "Meteora DBC",
-    body: "A basket with no holders has no market. A bonding curve priced from the basket's own NAV lets people buy in before anyone has assembled a share, then graduates into a locked Meteora pool.",
+    body: "A basket with no holders has no market. Its creator opens a bonding curve priced from the basket's own NAV, so people can buy in before anyone has assembled a share. It graduates into a locked Meteora pool.",
     href: "#launch",
   },
   {

@@ -14,7 +14,7 @@ import { fetchBasketAt, type Basket } from "@/lib/tessera";
 import { stockForWriteMint } from "@/lib/mirror";
 import { slotColor } from "@/lib/palette";
 import { quantity, shortAddress } from "@/lib/format";
-import { LaunchCard } from "@/components/launch-market";
+import { FeaturedLaunch } from "@/components/launch-market";
 
 export const metadata: Metadata = {
   title: "How it works",
@@ -310,7 +310,7 @@ export default async function MethodPage() {
           title="Open a market"
           on="Meteora Dynamic Bonding Curve"
           proof={{ label: "The pool on Explorer", href: explorerAddress(DBC.pool) }}
-          visual={<LaunchCard />}
+          visual={<FeaturedLaunch />}
         >
           <p>
             A new basket has no holders yet, and nobody wants to be first to
@@ -322,6 +322,14 @@ export default async function MethodPage() {
             numbers. It opens at half of it and graduates at twenty times it into a
             Meteora DAMM v2 pool with all liquidity locked. The fee starts at 4% to
             deter snipers and settles at 1% within the hour.
+          </p>
+          <p>
+            The basket&rsquo;s creator opens it from the basket page in one
+            signature and earns half of the curve&rsquo;s trading fees; Tessera
+            earns the other half. The pool&rsquo;s address is derived from the
+            basket&rsquo;s, so every basket has exactly one launch and anyone can
+            find it. When the curve fills, anyone can graduate it from the same
+            page.
           </p>
         </Stage>
 

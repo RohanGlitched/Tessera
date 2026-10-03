@@ -33,8 +33,9 @@ flowchart LR
    first to assemble every component. A Meteora Dynamic Bonding Curve opens in
    front of it, priced from the basket's own NAV: it starts at 0.5x and
    graduates at 20x into a Meteora DAMM v2 pool with all liquidity locked. The
-   live one is on the [home page](https://www.teserra.world/#launch), and you
-   can buy on it from there.
+   basket's creator opens it from the basket page in one signature and earns half
+   the curve's trading fees. Anyone can buy on it, and anyone can graduate it
+   once it fills.
 3. **Create shares in kind.** `mint_shares` moves exactly the components the
    recipe names into the vault, and `redeem_shares` hands exactly that back. No
    oracle is read, so there is no price to push. PreStocks transfer fees are
@@ -51,30 +52,31 @@ flowchart LR
 
 Everything below runs on devnet and costs nothing.
 
-1. **Get a wallet on devnet.** Install [Phantom](https://phantom.app/download)
-   (or any Solana wallet), then switch it to devnet. In Phantom: Settings →
-   Developer settings → Testnet mode.
-2. **Get free devnet SOL** for fees at [faucet.solana.com](https://faucet.solana.com).
-   If your wallet has none, the app shows a banner with a copy-address button and
-   a link to the faucet.
-3. **Open [teserra.world](https://www.teserra.world)** and
-   connect. The market on the home page is live mainnet data.
-4. **Buy on the launch curve.** In the Meteora section of the
+1. **Open [teserra.world](https://www.teserra.world)** and connect any Solana
+   wallet, such as [Phantom](https://phantom.app/download). The market on the
+   home page is live mainnet data.
+2. **Press Get free test SOL.** A new wallet gets a banner with one button that
+   sends it 0.04 devnet SOL, enough to try everything below.
+   [faucet.solana.com](https://faucet.solana.com) works too.
+3. **Buy on a launch curve.** In the Meteora section of the
    [home page](https://www.teserra.world/#launch), pick an amount and press
    **Buy FRNTRA**. The dot on the curve moves with your buy.
-5. **Claim test tokens.** On [Portfolio](https://www.teserra.world/portfolio),
+4. **Claim test tokens.** On [Portfolio](https://www.teserra.world/portfolio),
    press **Claim a starter set**, or press **Send me … of each** on any basket
    page when you are short of a component.
-6. **Create shares in an existing basket.** Open one from
+5. **Create shares in an existing basket.** Open one from
    [Explore](https://www.teserra.world/explore), for example
    [The Big Five](https://www.teserra.world/basket/6cUCq5GdhrdLGqJiy63iuc1epLFrEmAYQ45JvYEYGbg3),
    choose how many shares, and press **Create BIG5**. The vault holdings and the
    backing check update as soon as the transaction lands.
-7. **Redeem them** from the same panel. Every component comes back to your wallet.
-8. **Launch your own index fund.** On [Compose](https://www.teserra.world/compose),
+6. **Redeem them** from the same panel. Every component comes back to your wallet.
+7. **Launch your own index fund.** On [Compose](https://www.teserra.world/compose),
    tap tiles (or pick from the Table view), drag the weights, name the token, set
    a creator fee and press **Lay the basket**. It gets its own page and its own
    link preview.
+8. **Open its launch market.** The next screen offers **Open the market**. One
+   signature puts a Meteora curve in front of your basket, priced from its NAV.
+   Claim your half of the trading fees from the same card.
 
 **[Portfolio](https://www.teserra.world/portfolio)** then looks through
 everything you hold to the companies underneath, so three baskets that all
@@ -182,38 +184,47 @@ verified live on devnet:
 their transfer fees intact. Compose, Portfolio and the basket page treat a
 PreStock like any other component.
 
-### Meteora DBC: a launch market for a new basket
+### Meteora DBC: a launch market for every basket
 
-A new basket has no shares and no liquidity yet. `scripts/dbc-launch.mjs` opens a
-Meteora Dynamic Bonding Curve pool as a launch market for a real Tessera basket,
-on the real DBC program (`dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN`, the same
-address on devnet and mainnet). The pool is configured from the basket's own
-numbers:
+A new basket has no shares and no liquidity yet. Tessera is a launchpad on
+Meteora's Dynamic Bonding Curve (`dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN`,
+the same address on devnet and mainnet): the creator of any basket opens a launch
+market for it from the basket page, and the whole lifecycle runs in the app.
 
-- **`initialMarketCap` and `migrationMarketCap`** are set at 0.5x and 20x the
-  basket's NAV per share, converted to SOL at Jupiter's live price at launch.
-- **`tokenAuthorityOption: Immutable`**, so the base mint has no upgrade path.
-- **The fee scheduler decays from 4% to 1% over the first hour**, which deters
-  snipers at the open.
-- **Migrated liquidity is 100% permanently locked**, split evenly between
-  partner and creator.
+- **Priced from the basket, not a round number.** `initialMarketCap` and
+  `migrationMarketCap` are 0.5x and 20x the basket's NAV per share, converted to
+  SOL at Jupiter's live price when the market opens.
+- **One launch per basket, found without an indexer.** The config and base-mint
+  keys are derived from the basket's address (`launchKeys` in `web/lib/dbc.ts`),
+  so the pool address follows from the basket alone. Explore marks every basket
+  with a live launch using one batched account read.
+- **Fees shared between creator and platform.** `creatorTradingFeePercentage` is
+  50: the basket's creator claims their half from the launch card, and Tessera's
+  treasury is the partner `feeClaimer`. The fee scheduler decays from 4% to 1%
+  over the first hour to deter snipers.
+- **Nothing to rug.** `tokenAuthorityOption: Immutable`, and 100% of migrated
+  liquidity is permanently locked, split between partner and creator.
+- **Buys never fail at the top.** Buys use `swap2` in `PartialFill` mode, so the
+  last buy fills the curve and refunds the rest.
+- **Graduation from the page.** Once the curve fills, anyone can press
+  **Graduate to Meteora DAMM v2**, which calls `migrateToDammV2`. The card then
+  links the DAMM v2 pool, whose address is derived the same way.
 
-Verified live on devnet for the "Frontier Labs" basket:
+The full lifecycle, run through the app on devnet for the "Small Change" basket:
 
-- **Config:** `DqxXAWXXqurghukxhZmtridTj1nBobJSHG5aSBeYD5nu`
-- **Pool:** [`DAZdm2LmiDCfVQaAuVkKdK5Qa1hWmkV1fNK6SzGikqFU`](https://explorer.solana.com/address/DAZdm2LmiDCfVQaAuVkKdK5Qa1hWmkV1fNK6SzGikqFU?cluster=devnet)
-- **Base token (Token-2022):** `4A1rSrw6PoAVHg1AUfYfxs9nQzbF2ptY86caUuoJsULV`, "Frontier Labs, early access" (FRNTRA)
-- **Creation tx:** [`3MDHtKoB…cua1MMgb`](https://explorer.solana.com/tx/3MDHtKoBXMSmrvhAXoCGXcnS32ekQy6x5udLhyKmE3xAXEe6xLZEv5a6XFZBmmEDiaYDKmgybQ1fp9mEcua1MMgb?cluster=devnet)
-- **A real buy:** [`38KaZPY3…7QagfjzUxAni`](https://explorer.solana.com/tx/38KaZPY3tSVWxtk3xX9PkAqDqeubzAYXTV24hqNkGhuC59wQKBC4yXfZeRTS65tCa2Z2LgTtWaHg7QagfjzUxAni?cluster=devnet),
-  0.01 SOL in, about 4.1M of the 990M curve supply out.
+- **Opened:** [`5dTLYrrx…eCZfe6`](https://explorer.solana.com/tx/5dTLYrrxpfRZ8mdv78M7sBxTzdn3Fue7VydnkoKb9vQhh5RMhx1ZsFS77dAvJxKcLLudmqZS6syneeavnyeCZfe6?cluster=devnet), config and Token-2022 pool in one signature
+- **Bought:** [`2qT9Vp2F…CqF1pL`](https://explorer.solana.com/tx/2qT9Vp2FVU68K8QNsQCcZvKNaryE8Xn7GFccLFSLWarNwFAQAVvvWeHUFgSyyoWeJ3nB4bypAbwe2wdosNCqF1pL?cluster=devnet), then a partial fill to the top: [`2W8DAX1E…8qU2sby`](https://explorer.solana.com/tx/2W8DAX1EF7DA9tQZ8fz6VhfjPxuLuUNuxY7GypmzdU3APMop8yaE57HF6dJfSWSF2WY7uyGzf8DZwh23i8qU2sby?cluster=devnet)
+- **Graduated:** [`2axtjcWU…oeHez5mE`](https://explorer.solana.com/tx/2axtjcWUPAR5vV1LR38kJsqA83YGHVMQUPREkppaPAyMD4i9QfTeVKWL4J8mqSmngSJq6ehaHA4aDGXgoeHez5mE?cluster=devnet) into DAMM v2 pool [`CU2TWUHw…LfiKJu`](https://explorer.solana.com/address/CU2TWUHwD4kfcFJY5Say2DRm6xuM1H4vFzxGDQLfiKJu?cluster=devnet)
 
-The home page reads the pool and config accounts directly (`readDbcState` in
-`web/lib/dbc.ts`), draws the curve from them, and builds buys with the Meteora
-SDK (`web/components/launch-market.tsx`), so anyone with a wallet can trade on it
-without leaving Tessera.
+The curves on the site are read straight from the pool and config accounts
+(`readDbcState` in `web/lib/dbc.ts`), and every transaction is built with the
+Meteora SDK in the browser (`web/lib/launch.ts`, `web/components/launch-market.tsx`).
+The first launch, "Frontier Labs, early access" (FRNTRA, pool
+[`DAZdm2Lm…GikqFU`](https://explorer.solana.com/address/DAZdm2LmiDCfVQaAuVkKdK5Qa1hWmkV1fNK6SzGikqFU?cluster=devnet)),
+was opened by `scripts/dbc-launch.mjs` and is the one on the home page.
 
-On the roadmap: letting the pool's migration fund the basket's first creation,
-so early buyers roll straight into redeemable shares.
+On the roadmap: letting a graduated pool fund the basket's first creation, so
+early buyers roll straight into redeemable shares.
 
 ---
 
@@ -268,7 +279,7 @@ Backpack and others).
 | `/` | The live market as a mosaic sized by on-chain liquidity, the life of a basket, the Meteora launch curve you can buy on, and the baskets that exist |
 | `/compose` | Pick companies, set weights, name the token and launch the basket |
 | `/explore` | Every basket, with its backing proof and its premium to its own components |
-| `/basket/[address]` | One basket: recipe, vault contents, backing check, create and redeem, and the cost of buying in with dollars |
+| `/basket/[address]` | One basket: recipe, vault contents, backing check, create and redeem, its Meteora launch market, and the cost of buying in with dollars |
 | `/portfolio` | What you hold, what it is worth, and the companies underneath |
 | `/method` | How it works and the reasoning behind each design choice |
 
@@ -362,11 +373,13 @@ tests/tessera.ts                     10 integration tests, including the dividen
 web/                                 the Next.js app
 web/lib/prestocks.ts                 the 8 PreStocks pre-IPO mints
 web/lib/mirror.generated.ts          mainnet mint → devnet mirror mint, per ticker
+web/lib/dbc.ts                       where each basket's launch lives, read straight from the accounts
+web/lib/launch.ts                    the transaction that opens a launch market
 scripts/go-devnet.sh                 one-command devnet deployment
 scripts/setup-mirror.mjs             creates the xStock mirror mints
 scripts/setup-mirror-prestocks.mjs   the same for PreStocks, transfer fee included
 scripts/seed-baskets.mjs             a few example baskets
-scripts/dbc-launch.mjs               opens a Meteora DBC pool sized from a basket's NAV
+scripts/dbc-launch.mjs               opened the first launch (FRNTRA) before launches moved into the app
 scripts/split-faucet-key.mjs         moves mint authority off the deploy wallet
 scripts/lib/rpc.mjs                  safe retries against a rate-limited RPC
 scripts/gen-universe.mjs             regenerates web/lib/universe.ts from mainnet

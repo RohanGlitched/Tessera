@@ -6,6 +6,7 @@ import { useBaskets } from "@/lib/use-baskets";
 import { useMarket } from "./market-provider";
 import { valueBasket } from "@/lib/basket-view";
 import { BasketCard } from "./basket-card";
+import { useOpenLaunches } from "@/lib/use-launches";
 import { count, money } from "@/lib/format";
 import { CardSkeletons } from "./skeletons";
 
@@ -28,6 +29,7 @@ const SORTS: { key: SortKey; label: string }[] = [
 
 export function Explorer() {
   const { baskets, error, loading } = useBaskets();
+  const launched = useOpenLaunches(baskets);
   const { snapshot } = useMarket();
   const [sort, setSort] = useState<SortKey>("newest");
   const [query, setQuery] = useState("");
@@ -180,7 +182,7 @@ export function Explorer() {
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <h2 className="sr-only">Baskets</h2>
           {rows.map((basket) => (
-            <BasketCard key={basket.address} basket={basket} />
+            <BasketCard key={basket.address} basket={basket} launched={launched.has(basket.address)} />
           ))}
         </div>
       )}

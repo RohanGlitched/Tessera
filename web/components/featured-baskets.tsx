@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useBaskets } from "@/lib/use-baskets";
 import { BasketCard } from "./basket-card";
+import { useOpenLaunches } from "@/lib/use-launches";
 import { CardSkeletons } from "./skeletons";
 
 export function FeaturedBaskets() {
   const { baskets, error, loading } = useBaskets();
+  const launched = useOpenLaunches(baskets);
 
   return (
     <div>
@@ -52,7 +54,7 @@ export function FeaturedBaskets() {
       {baskets && baskets.length > 0 && (
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {baskets.slice(0, 6).map((basket) => (
-            <BasketCard key={basket.address} basket={basket} />
+            <BasketCard key={basket.address} basket={basket} launched={launched.has(basket.address)} />
           ))}
         </div>
       )}

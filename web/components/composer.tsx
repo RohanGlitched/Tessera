@@ -77,6 +77,7 @@ export function Composer() {
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState<{ done: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [done, setDone] = useState<{ signature: string; basket: string } | null>(
     null,
   );
@@ -340,34 +341,77 @@ export function Composer() {
   }
 
   if (done) {
+    const next = [
+      {
+        n: "1",
+        title: "Create the first shares",
+        body: "Hand the vault the components and get shares back. The page tops up test tokens if you are short.",
+        href: `/basket/${done.basket}`,
+        cta: `Create ${trimmedSymbol}`,
+      },
+      {
+        n: "2",
+        title: "Open a launch market",
+        body: "Put a Meteora bonding curve in front of the basket, priced off its own NAV. You earn half its trading fees.",
+        href: `/basket/${done.basket}#launch`,
+        cta: "Open the market",
+      },
+      {
+        n: "3",
+        title: "Share it",
+        body: "The basket page has its own preview card, so a link shows the recipe wherever it is posted.",
+        href: `/basket/${done.basket}`,
+        cta: "Copy the link",
+        copy: true,
+      },
+    ];
     return (
-      <div className="mx-auto max-w-[42rem] py-24 text-center">
-        <p className="text-sm text-gold">Laid</p>
-        <h1 className="display mt-4 text-title text-ivory">
-          {trimmedName} exists.
-        </h1>
-        <p className="mt-5 text-base leading-relaxed text-ivory-dim">
-          The recipe is written into a program account and the share mint&apos;s
-          authority now belongs to it. Anybody can create shares by handing the vault
-          the components, and redeem them for the same components back.
-        </p>
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
-          <button
-            type="button"
-            onClick={() => router.push(`/basket/${done.basket}`)}
-            className="border border-gold bg-gold px-5 py-3 text-sm text-ground-deep transition-colors hover:bg-[#c79a2e]"
-          >
-            Open {trimmedSymbol}
-          </button>
-          <a
-            href={explorerTx(done.signature)}
-            target="_blank"
-            rel="noreferrer"
-            className="border border-rule px-5 py-3 text-sm text-ivory-dim transition-colors hover:border-rule-bright hover:text-ivory"
-          >
-            View the transaction
-          </a>
+      <div className="mx-auto max-w-[60rem] py-20">
+        <div className="text-center">
+          <p className="text-sm text-gold">Laid</p>
+          <h1 className="display mt-4 text-title text-ivory">{trimmedName} exists.</h1>
+          <p className="mx-auto mt-5 max-w-[42rem] text-base leading-relaxed text-ivory-dim">
+            The recipe is written into a program account and the share mint&apos;s authority
+            now belongs to it. Anybody can create shares by handing the vault the components,
+            and redeem them for the same components back.{" "}
+            <a
+              href={explorerTx(done.signature)}
+              target="_blank"
+              rel="noreferrer"
+              className="underline decoration-rule-bright underline-offset-4 hover:text-ivory"
+            >
+              View the transaction
+            </a>
+          </p>
         </div>
+        <ol className="mt-14 grid gap-px border border-rule bg-rule md:grid-cols-3">
+          {next.map((step) => (
+            <li key={step.n} className="flex flex-col bg-ground-raised p-6">
+              <p className="display text-2xl text-gold">{step.n}</p>
+              <h2 className="mt-3 text-base text-ivory">{step.title}</h2>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-ivory-dim">{step.body}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  if (step.copy) {
+                    void navigator.clipboard
+                      ?.writeText(`${window.location.origin}${step.href}`)
+                      .then(() => setCopied(true));
+                  } else {
+                    router.push(step.href);
+                  }
+                }}
+                className={
+                  step.n === "1"
+                    ? "mt-6 border border-gold bg-gold px-4 py-2.5 text-sm text-ground-deep transition-colors hover:bg-[#c79a2e]"
+                    : "mt-6 border border-rule-bright px-4 py-2.5 text-sm text-ivory transition-colors hover:border-gold hover:text-gold"
+                }
+              >
+                {step.copy && copied ? "Copied" : step.cta}
+              </button>
+            </li>
+          ))}
+        </ol>
       </div>
     );
   }
