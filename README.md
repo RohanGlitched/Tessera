@@ -265,11 +265,17 @@ market for it from the basket page, and the whole lifecycle runs in the app.
   over the first hour to deter snipers.
 - **Nothing to rug.** `tokenAuthorityOption: Immutable`, and 100% of migrated
   liquidity is permanently locked, split between partner and creator.
-- **Buys never fail at the top.** Buys use `swap2` in `PartialFill` mode, so the
-  last buy fills the curve and refunds the rest.
-- **Graduation from the page.** Once the curve fills, anyone can press
-  **Graduate to Meteora DAMM v2**, which calls `migrateToDammV2`. The card then
-  links the DAMM v2 pool, whose address is derived the same way.
+- **Buy and sell, before and after graduation.** On the curve, buys use DBC
+  `swap2` in `PartialFill` mode, so the last buy fills the curve and refunds
+  the rest, and sells are exact-in. Once the curve fills, anyone can press
+  **Graduate to Meteora DAMM v2**, which calls `migrateToDammV2`; the same card
+  then trades on the DAMM v2 pool through `@meteora-ag/cp-amm-sdk`, and reads
+  the market cap from that pool's own price. One token, one market in the app,
+  across the whole lifecycle (`web/lib/trade.ts`).
+- **Creators keep earning after graduation.** Graduation locks half the DAMM v2
+  liquidity in a position the creator owns and half in one the treasury owns.
+  The card reads each position's unclaimed fees with `getUnClaimLpFee` and
+  claims them with `claimPositionFee`.
 
 The full lifecycle, run through the app on devnet for the "Small Change" basket:
 
@@ -453,6 +459,7 @@ web/lib/prestocks.ts                 the 8 PreStocks pre-IPO mints
 web/lib/mirror.generated.ts          mainnet mint → devnet mirror mint, per ticker
 web/lib/dbc.ts                       where each basket's launch lives, read straight from the accounts
 web/lib/launch.ts                    the transaction that opens a launch market
+web/lib/trade.ts                     buys and sells on the curve, then on DAMM v2
 web/lib/mainnet.ts                   mint accounts read from mainnet through Solami
 web/app/api/launches/route.ts        every launch market as JSON, for terminals
 scripts/go-devnet.sh                 one-command devnet deployment

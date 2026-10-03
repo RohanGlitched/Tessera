@@ -336,7 +336,8 @@ export default async function MethodPage() {
             earns the other half. The pool&rsquo;s address is derived from the
             basket&rsquo;s, so every basket has exactly one launch and anyone can
             find it. When the curve fills, anyone can graduate it from the same
-            page.
+            page, and the same card keeps buying and selling, on the DAMM v2
+            pool instead of the curve.
           </p>
         </Stage>
 

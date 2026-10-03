@@ -169,6 +169,9 @@ importers:
       '@coral-xyz/anchor':
         specifier: 0.31.1
         version: 0.31.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@meteora-ag/cp-amm-sdk':
+        specifier: 1.5.1
+        version: 1.5.1(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@meteora-ag/dynamic-bonding-curve-sdk':
         specifier: 1.5.12
         version: 1.5.12(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@6.0.6)
@@ -193,6 +196,9 @@ importers:
       '@solana/web3.js':
         specifier: ^1.99.0
         version: 1.99.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      bn.js:
+        specifier: ^5.2.5
+        version: 5.2.5
       bs58:
         specifier: ^6.0.0
         version: 6.0.0
@@ -209,6 +215,9 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.3.3
+      '@types/bn.js':
+        specifier: ^5.2.0
+        version: 5.2.0
       '@types/node':
         specifier: ^20
         version: 20.19.43
@@ -687,6 +696,9 @@ packages:
 
   '@lit/reactive-element@2.1.2':
     resolution: {integrity: sha512-pbCDiVMnne1lYUIaYNN5wrwQXDtHaYtg7YEFPeW+hws6U47WeFvISGUWekPGKWOP1ygrs0ef0o1VJMk1exos5A==}
+
+  '@meteora-ag/cp-amm-sdk@1.5.1':
+    resolution: {integrity: sha512-f5jB4cMZ9iA8V+Dtah5I3LvRACyX0TlQkrvD/lxy2SyPf9M8rMK2ViodgCEwTVqyRvyv4JMeK2fGOpDaYwVAug==}
 
   '@meteora-ag/dynamic-bonding-curve-sdk@1.5.12':
     resolution: {integrity: sha512-xMtzUXriajNtNwYgNwk5T9IKxjfj6QP1I4yUKAe9JiGrVgpqoLkwvB2mKy8824nSWrVNVX5CAufHW5Kvjz/FNA==}
@@ -2312,6 +2324,9 @@ packages:
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
 
+  '@types/bn.js@5.2.0':
+    resolution: {integrity: sha512-DLbJ1BPqxvQhIGbeu8VbUC1DiAiahHtAYvA0ZEAa4P31F7IaArc8z3C3BRQdWX4mtLQuABG4yzp76ZrS02Ui1Q==}
+
   '@types/connect@3.4.38':
     resolution: {integrity: sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug==}
 
@@ -3030,6 +3045,10 @@ packages:
   cbor@10.0.12:
     resolution: {integrity: sha512-exQDevYd7ZQLP4moMQcZkKCVZsXLAtUSflObr3xTh4xzFIv/xBCdvCd6L259kQOUP2kcTC0jvC6PpZIf/WmRXA==}
     engines: {node: '>=20'}
+
+  chain@0.4.2:
+    resolution: {integrity: sha512-GtM+TlN398yBhtSp1D2dBLQomKM3Umbji3h2/NdCqAWSMKhWbjlz33j0e55rStsEZD+8OLRHuz7kWd0U3xKMDg==}
+    engines: {node: '>=18'}
 
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
@@ -6162,6 +6181,23 @@ snapshots:
     dependencies:
       '@lit-labs/ssr-dom-shim': 1.6.0
 
+  '@meteora-ag/cp-amm-sdk@1.5.1(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@6.0.6)':
+    dependencies:
+      '@coral-xyz/anchor': 0.31.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@solana/spl-token': 0.4.15(@solana/web3.js@1.99.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@solana/web3.js': 1.99.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@types/bn.js': 5.2.0
+      bn.js: 5.2.5
+      chain: 0.4.2
+      decimal.js: 10.6.0
+      invariant: 2.2.4
+    transitivePeerDependencies:
+      - bufferutil
+      - encoding
+      - fastestsmallesttextencoderdecoder
+      - typescript
+      - utf-8-validate
+
   '@meteora-ag/dynamic-bonding-curve-sdk@1.5.12(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@6.0.6)':
     dependencies:
       '@coral-xyz/anchor': 0.31.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
@@ -8636,6 +8672,10 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
+  '@types/bn.js@5.2.0':
+    dependencies:
+      '@types/node': 20.19.43
+
   '@types/connect@3.4.38':
     dependencies:
       '@types/node': 20.19.43
@@ -9823,6 +9863,8 @@ snapshots:
   cbor@10.0.12:
     dependencies:
       nofilter: 3.1.0
+
+  chain@0.4.2: {}
 
   chalk@4.1.2:
     dependencies:

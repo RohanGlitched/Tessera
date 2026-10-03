@@ -202,13 +202,27 @@ export async function readDbcState(
     if (end === migration) break;
   }
 
+  // After graduation the curve is frozen and trading carries on in DAMM v2, so
+  // the market cap comes from that pool's own price.
+  const migrated = pool.data[305] === 1;
+  let capNow = cap(u128(pool.data, 280));
+  if (migrated) {
+    const damm = await connection.getAccountInfo(new PublicKey(dammV2PoolAddress(info.baseMint)));
+    if (damm) {
+      const baseIsA = new PublicKey(damm.data.subarray(168, 200)).toBase58() === info.baseMint;
+      const raw = (Number(u128(damm.data, 456)) / Q64) ** 2;
+      const solPerToken = (baseIsA ? raw : 1 / raw) * 10 ** (info.baseDecimals - 9);
+      capNow = solPerToken * info.supply;
+    }
+  }
+
   return {
     raised: Number(u64(pool.data, 240)) / 1e9,
     threshold: Number(u64(config.data, 264)) / 1e9,
     openCap: cap(u128(config.data, 392)),
-    cap: cap(u128(pool.data, 280)),
+    cap: capNow,
     graduationCap: cap(u128(config.data, 280)),
-    migrated: pool.data[305] === 1,
+    migrated,
     creator: new PublicKey(pool.data.subarray(104, 136)).toBase58(),
     creatorFees: Number(u64(pool.data, 360)) / 1e9,
     totalFees: Number(u64(pool.data, 336)) / 1e9,
