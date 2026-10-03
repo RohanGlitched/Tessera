@@ -40,23 +40,23 @@ export default function Home() {
         <div className="max-w-[34rem] self-center">
           <Link
             href="#launch"
-            className="mb-7 inline-flex items-center gap-2.5 border border-gold/40 px-3 py-1.5 text-xs text-ivory-dim transition-colors hover:border-gold hover:text-ivory"
+            className="rise mb-7 inline-flex items-center gap-2.5 border border-gold/40 px-3 py-1.5 text-xs text-ivory-dim transition-colors hover:border-gold hover:text-ivory"
           >
-            <span className="size-1.5 shrink-0 rounded-full bg-gain" aria-hidden />
+            <span className="live-dot size-1.5 shrink-0 rounded-full bg-gain" aria-hidden />
             Live now: a basket trading on a Meteora bonding curve
             <span aria-hidden>↓</span>
           </Link>
-          <h1 className="display text-hero text-ivory">
+          <h1 className="rise display text-hero text-ivory" style={{ "--i": 1 } as React.CSSProperties}>
             An index fund is a list of companies and a set of weights.
           </h1>
-          <p className="mt-7 max-w-[46ch] text-lg leading-relaxed text-ivory-dim">
+          <p className="rise mt-7 max-w-[46ch] text-lg leading-relaxed text-ivory-dim" style={{ "--i": 2 } as React.CSSProperties}>
             Tessera is an ETF launchpad on Solana. Pick up to eight tokenised
             stocks and pre-IPO companies such as OpenAI and SpaceX, set the
             weights, and launch them as one token. Every share is backed by the
             real tokens in an on-chain vault and can be redeemed for them at any
             time. You earn a fee on every share created.
           </p>
-          <div className="mt-9 flex flex-wrap items-center gap-4">
+          <div className="rise mt-9 flex flex-wrap items-center gap-4" style={{ "--i": 3 } as React.CSSProperties}>
             <ComposeCta />
             <Link
               href="/explore"
@@ -65,7 +65,7 @@ export default function Home() {
               Explore baskets
             </Link>
           </div>
-          <p className="mt-7 text-sm leading-relaxed text-ivory-faint">
+          <p className="rise mt-7 text-sm leading-relaxed text-ivory-faint" style={{ "--i": 4 } as React.CSSProperties}>
             Nothing is priced by an oracle. A share is created by handing the vault
             the exact tokens the recipe names, and redeemed by taking them back.
           </p>
@@ -77,12 +77,12 @@ export default function Home() {
       </section>
 
       {/* ------------------------------------------------------------ stats */}
-      <section className="border-y border-rule py-px">
+      <section className="reveal border-y border-rule py-px">
         <HomeStats />
       </section>
 
       {/* ------------------------------------------------------- lifecycle */}
-      <section className="py-20">
+      <section className="reveal py-20">
         <h2 className="display text-title max-w-[26ch] text-ivory">
           From a recipe to a market, and none of it trusts us.
         </h2>
@@ -120,12 +120,12 @@ export default function Home() {
       </section>
 
       {/* ---------------------------------------------------------- launch */}
-      <section id="launch" className="scroll-mt-24 border-t border-rule py-20">
+      <section id="launch" className="reveal scroll-mt-24 border-t border-rule py-20">
         <LaunchMarket />
       </section>
 
       {/* ------------------------------------------------------- two clocks */}
-      <section className="grid gap-10 border-t border-rule py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-16">
+      <section className="reveal grid gap-10 border-t border-rule py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-16">
         <div className="max-w-[38ch] self-center">
           <h2 className="display text-title text-ivory">
             The exchange keeps hours. Your basket does not.
@@ -147,7 +147,7 @@ export default function Home() {
       </section>
 
       {/* -------------------------------------------------------- baskets */}
-      <section className="border-t border-rule py-20">
+      <section className="reveal border-t border-rule py-20">
         <FeaturedBaskets />
       </section>
     </div>

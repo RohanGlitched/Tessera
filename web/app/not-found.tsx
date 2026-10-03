@@ -9,7 +9,7 @@ export default function NotFound() {
   return (
     <div className="mx-auto max-w-[1400px] px-5 py-32 text-center sm:px-8">
       <p className="tnum text-sm text-ivory-faint">404</p>
-      <h1 className="display text-title mt-3 text-ivory">Nothing laid here.</h1>
+      <h1 className="display text-title mt-3 text-ivory">Nothing here.</h1>
       <p className="mx-auto mt-4 max-w-[48ch] text-base leading-relaxed text-ivory-dim">
         This page does not exist. The market and every basket on the program are
         a click away.

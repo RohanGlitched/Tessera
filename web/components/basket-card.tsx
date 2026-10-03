@@ -30,7 +30,7 @@ export function BasketCard({ basket, launched = false }: { basket: Basket; launc
   return (
     <Link
       href={`/basket/${basket.address}`}
-      className="group block border border-rule bg-ground transition-colors hover:border-rule-bright"
+      className="group lift block border border-rule bg-ground hover:border-rule-bright"
     >
       <div className="flex items-baseline justify-between gap-3 px-5 pt-5">
         <div className="min-w-0">

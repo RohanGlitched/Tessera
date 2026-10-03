@@ -21,9 +21,9 @@ import { CardSkeletons } from "./skeletons";
 type SortKey = "newest" | "value" | "activity" | "components";
 
 const SORTS: { key: SortKey; label: string }[] = [
+  { key: "activity", label: "Most traded" },
   { key: "newest", label: "Newest" },
   { key: "value", label: "Most valuable share" },
-  { key: "activity", label: "Most traded" },
   { key: "components", label: "Most holdings" },
 ];
 
@@ -31,7 +31,7 @@ export function Explorer() {
   const { baskets, error, loading } = useBaskets();
   const launched = useOpenLaunches(baskets);
   const { snapshot } = useMarket();
-  const [sort, setSort] = useState<SortKey>("newest");
+  const [sort, setSort] = useState<SortKey>("activity");
   const [query, setQuery] = useState("");
 
   const rows = useMemo(() => {

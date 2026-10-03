@@ -75,9 +75,17 @@ body {
   border-radius: 1px;
 }
 
-/* Besides tiles settling in, only the market clock animates unprompted, and only
-   because a clock that does not move is broken. */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Things settle into place once; only the market clock and live markers keep
+   moving, because a clock that does not move is broken and a live dot that
+   does not breathe looks dead. */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   *,
   *::before,
   *::after {
@@ -99,6 +107,63 @@ body {
 
 .pulse {
   animation: tessera-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes tessera-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+/* First paint: the hero settles in line by line. */
+.rise {
+  animation: tessera-rise 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+/* Sections below the fold rise as they scroll into view, where the browser can
+   drive it from the scroll position; elsewhere they are simply there. */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: tessera-rise 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 30%;
+  }
+}
+
+@keyframes tessera-ping {
+  to {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+.live-dot {
+  position: relative;
+}
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  animation: tessera-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.lift {
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 160ms ease-out,
+    box-shadow 220ms ease-out;
+}
+.lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px -20px rgb(0 0 0 / 0.7);
+}
+
+button:not(:disabled):active {
+  transform: translateY(1px);
 }
 
 @keyframes tessera-tile-in {

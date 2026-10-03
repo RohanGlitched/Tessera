@@ -438,6 +438,7 @@ export default async function MethodPage() {
               ["Oracles used", "none"],
               ["Recipe after creation", "immutable"],
               ["Launch market", "Meteora DBC"],
+              ["Tessera's revenue", "half of every launch curve's trading fees"],
             ].map(([term, value]) => (
               <div key={term} className="flex items-baseline justify-between gap-4 px-4 py-3">
                 <dt className="text-ivory-faint">{term}</dt>

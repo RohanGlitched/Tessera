@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { PublicKey } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
@@ -427,7 +427,7 @@ export function LaunchCard({
           <span className="text-ivory-dim">{info.baseName}</span>
         </p>
         <p className="flex items-center gap-2 text-xs text-ivory-faint">
-          <span className="size-1.5 rounded-full bg-gain" aria-hidden />
+          <span className={`size-1.5 rounded-full bg-gain ${state?.migrated ? "" : "live-dot"}`} aria-hidden />
           {state?.migrated
             ? "Graduated to Meteora DAMM v2"
             : state && state.raised >= state.threshold
@@ -614,11 +614,30 @@ const PAD = { top: 20, right: 16, bottom: 30, left: 16 };
  * shape is an exact parabola, not an illustration.
  */
 function Curve({ state, error }: { state: DbcState | null; error: string | null }) {
-  const { ref, width } = useMeasure<HTMLDivElement>();
+  const { ref: measure, width } = useMeasure<HTMLDivElement>();
+  const el = useRef<HTMLDivElement | null>(null);
+  const ref = useCallback(
+    (node: HTMLDivElement | null) => {
+      el.current = node;
+      measure(node);
+    },
+    [measure],
+  );
+  // The chart usually sits below the fold, so the draw-in waits until it is seen.
+  const [seen, setSeen] = useState(false);
+  useEffect(() => {
+    if (!el.current) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) setSeen(true);
+    });
+    observer.observe(el.current);
+    return () => observer.disconnect();
+  }, []);
+  const progress = useTween(seen && state ? Math.min(1, state.raised / state.threshold) : 0);
   return (
     <div ref={ref} className="h-[220px]">
       {state && width > 0 ? (
-        <CurvePlot state={state} W={width} />
+        <CurvePlot state={state} W={width} progress={progress} />
       ) : (
         <p className="flex h-full items-center justify-center px-6 text-center text-xs text-ivory-faint">
           {error ?? "Reading the pool"}
@@ -628,13 +647,45 @@ function Curve({ state, error }: { state: DbcState | null; error: string | null 
   );
 }
 
-function CurvePlot({ state, W }: { state: DbcState; W: number }) {
+/**
+ * Eases a value towards its target over 800ms, so the curve draws itself on
+ * first view and the marker slides along it after a buy instead of jumping.
+ */
+function useTween(target: number): number {
+  const [value, setValue] = useState(0);
+  const from = useRef(0);
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const frame = requestAnimationFrame(() => setValue(target));
+      return () => cancelAnimationFrame(frame);
+    }
+    const start = performance.now();
+    const begin = from.current;
+    let frame = 0;
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / 800);
+      const eased = 1 - (1 - t) ** 3;
+      const next = begin + (target - begin) * eased;
+      from.current = next;
+      setValue(next);
+      if (t < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [target]);
+  return value;
+}
+
+function CurvePlot({ state, W, progress }: { state: DbcState; W: number; progress: number }) {
   const a = Math.sqrt(state.openCap);
   const b = Math.sqrt(state.graduationCap);
   const capAt = (t: number) => (a + (b - a) * t) ** 2;
   const x = (t: number) => PAD.left + t * (W - PAD.left - PAD.right);
   const y = (cap: number) => H - PAD.bottom - (cap / state.graduationCap) * (H - PAD.top - PAD.bottom);
-  const progress = Math.min(1, state.raised / state.threshold);
+  // While the marker is moving it sits on the curve itself; at rest it sits at the pool's own price.
+  const settled = Math.abs(progress - Math.min(1, state.raised / state.threshold)) < 0.0005;
+  const cap = settled ? state.cap : capAt(progress);
+  const raised = settled ? state.raised : progress * state.threshold;
 
   const line = (from: number, to: number) =>
     Array.from({ length: 61 }, (_, i) => from + ((to - from) * i) / 60)
@@ -656,17 +707,17 @@ function CurvePlot({ state, W }: { state: DbcState; W: number }) {
       <path d={line(0, 1)} fill="none" stroke="var(--color-rule-bright)" strokeWidth="2" strokeDasharray="4 4" />
       <path d={filled} fill="var(--color-gold)" fillOpacity="0.18" />
       <path d={line(0, progress)} fill="none" stroke="var(--color-gold)" strokeWidth="2.5" />
-      <line x1={x(progress)} x2={x(progress)} y1={base} y2={y(state.cap)} stroke="var(--color-gold)" strokeDasharray="2 3" />
-      <circle cx={x(progress)} cy={y(state.cap)} r="6" fill="var(--color-gold)" stroke="var(--color-ground-raised)" strokeWidth="2" />
+      <line x1={x(progress)} x2={x(progress)} y1={base} y2={y(cap)} stroke="var(--color-gold)" strokeDasharray="2 3" />
+      <circle cx={x(progress)} cy={y(cap)} r="6" fill="var(--color-gold)" stroke="var(--color-ground-raised)" strokeWidth="2" />
       {/* Past the middle the label sits left of the dot, so it never runs off the edge. */}
       <text
         x={progress > 0.6 ? x(progress) - 12 : x(progress) + 12}
-        y={progress > 0.6 ? y(state.cap) + 20 : y(state.cap) - 10}
+        y={progress > 0.6 ? y(cap) + 20 : y(cap) - 10}
         fill="var(--color-ivory)"
         fontSize="13"
         textAnchor={progress > 0.6 ? "end" : "start"}
       >
-        {state.migrated ? "graduated" : "now"} · {quantity(state.raised, 4)} SOL in
+        {state.migrated ? "graduated" : "now"} · {quantity(raised, 4)} SOL in
       </text>
       <circle cx={x(1)} cy={y(state.graduationCap)} r="4" fill="none" stroke="var(--color-ivory-dim)" strokeWidth="1.5" />
       {progress < 0.85 && (

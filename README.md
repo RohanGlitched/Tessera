@@ -46,6 +46,8 @@ flowchart LR
 
 ![A basket page: recipe, vault holdings and net asset value](.github/readme/basket.png)
 
+![The basket's Meteora launch market: the live curve, a buy, and the creator's fee claim](.github/readme/launch.png)
+
 ---
 
 ## Try it in two minutes
@@ -103,6 +105,24 @@ a faithful mirror: one Token-2022 mint per ticker, with the same 8 decimals and 
 `ScaledUiAmountConfig` seeded from the multiplier the real mint carries. The
 program cannot tell the difference. Pointing Tessera at the real mints is a
 change to one generated file.
+
+---
+
+## How Tessera makes money
+
+Nothing is charged for creating a basket or for creating and redeeming shares:
+the creator fee is the creator's, in full. Revenue comes from the launch
+markets, where the Tessera treasury is the Meteora partner on every curve:
+
+- **Half of every curve's trading fees**, from the 4% opening fee down to the
+  settled 1%. The basket's creator earns the other half.
+- **1% of the SOL raised when a curve graduates**, taken as the migration fee.
+- **Half of the graduated DAMM v2 pool's fees, for good**, because half of the
+  migrated liquidity is permanently locked in a position the treasury owns.
+
+Every basket that opens a launch market pays the treasury for as long as the
+token trades, and the creator is paid alongside, which is why creators open
+one.
 
 ---
 
