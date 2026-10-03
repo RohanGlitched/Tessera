@@ -1,5 +1,6 @@
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 import {
+  LAUNCH_DECIMALS,
   LAUNCH_SUPPLY,
   NATIVE_SOL,
   TREASURY,
@@ -14,6 +15,17 @@ export const OPEN_MULTIPLE = 0.5;
 export const GRADUATION_MULTIPLE = 20;
 /** Share of curve trading fees that goes to the basket's creator; the rest to Tessera. */
 export const CREATOR_FEE_SHARE = 50;
+
+/**
+ * The curve's shape: four segments, as price breakpoints relative to the
+ * opening market cap and the liquidity weight of each. Heavy early segments
+ * make an opening shelf: the first fifth of the SOL raised moves the price
+ * less than a quarter above the open, and half the raise is in before the
+ * price reaches a sixth of graduation. Early buyers of a basket are not
+ * punished for being early, and late buyers pay for the climb. Four segments
+ * because the config has to fit in one transaction with the pool.
+ */
+export const LAUNCH_SHAPE = { caps: [1, 1.26, 2, 6.3, 40], weights: [16, 6, 2, 1] };
 
 export async function solUsd(): Promise<number> {
   const body = await fetch(`https://lite-api.jup.ag/price/v3?ids=${NATIVE_SOL.toBase58()}`, {
@@ -38,7 +50,8 @@ export async function buildLaunch(params: {
   const { connection, creator, basket, navSol } = params;
   const {
     DynamicBondingCurveClient,
-    buildCurveWithMarketCap,
+    buildCurveWithCustomSqrtPrices,
+    getSqrtPriceFromMarketCap,
     TokenType,
     TokenDecimal,
     TokenAuthorityOption,
@@ -50,7 +63,8 @@ export async function buildLaunch(params: {
     MigratedCollectFeeMode,
   } = await import("@meteora-ag/dynamic-bonding-curve-sdk");
 
-  const curve = buildCurveWithMarketCap({
+  const openCap = navSol * OPEN_MULTIPLE;
+  const curve = buildCurveWithCustomSqrtPrices({
     token: {
       tokenType: TokenType.Token2022,
       tokenBaseDecimal: TokenDecimal.SIX,
@@ -103,8 +117,10 @@ export async function buildLaunch(params: {
       cliffDurationFromMigrationTime: 0,
     },
     activationType: ActivationType.Slot,
-    initialMarketCap: navSol * OPEN_MULTIPLE,
-    migrationMarketCap: navSol * GRADUATION_MULTIPLE,
+    sqrtPrices: LAUNCH_SHAPE.caps.map((c) =>
+      getSqrtPriceFromMarketCap(openCap * c, LAUNCH_SUPPLY, LAUNCH_DECIMALS, 9),
+    ),
+    liquidityWeights: LAUNCH_SHAPE.weights,
   });
 
   const { config, mint } = await launchKeys(basket.address);

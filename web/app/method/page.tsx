@@ -324,6 +324,13 @@ export default async function MethodPage() {
             deter snipers and settles at 1% within the hour.
           </p>
           <p>
+            The shape is ours. Four segments, weighted so the curve opens on a
+            shelf: the first fifth of the SOL raised moves the price less than a
+            quarter above the open, and half the raise is in before the price
+            reaches a sixth of graduation. A basket is not a meme, and its
+            early buyers should not be racing each other.
+          </p>
+          <p>
             The basket&rsquo;s creator opens it from the basket page in one
             signature and earns half of the curve&rsquo;s trading fees; Tessera
             earns the other half. The pool&rsquo;s address is derived from the

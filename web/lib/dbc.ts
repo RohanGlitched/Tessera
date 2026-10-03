@@ -145,6 +145,12 @@ export type DbcState = {
   /** SOL of trading fees the creator can claim right now, and all fees ever charged. */
   creatorFees: number;
   totalFees: number;
+  /**
+   * The curve itself, as (SOL raised, market cap) at the start of the pool and
+   * at the end of every segment up to graduation. A chart drawn through these
+   * is the pool's own shape, whatever it is.
+   */
+  shape: { raised: number; cap: number }[];
 };
 
 const Q64 = 2 ** 64;
@@ -177,6 +183,25 @@ export async function readDbcState(
   const cap = (sqrtPrice: bigint) =>
     (Number(sqrtPrice) / Q64) ** 2 * 10 ** (info.baseDecimals - 9) * info.supply;
 
+  // Segments are (sqrtPrice, liquidity) pairs from offset 408, up to twenty of
+  // them; SOL raised across one is liquidity × Δ√price / 2^128. The curve runs
+  // past the migration price, so the shape stops there.
+  const start = u128(config.data, 392);
+  const migration = u128(config.data, 280);
+  const shape = [{ raised: 0, cap: cap(start) }];
+  let prev = start;
+  let raised = 0;
+  for (let i = 0; i < 20; i++) {
+    const sqrtPrice = u128(config.data, 408 + i * 32);
+    const liquidity = u128(config.data, 408 + i * 32 + 16);
+    if (sqrtPrice === 0n || liquidity === 0n) break;
+    const end = sqrtPrice < migration ? sqrtPrice : migration;
+    raised += Number((liquidity * (end - prev)) >> 128n) / 1e9;
+    shape.push({ raised, cap: cap(end) });
+    prev = end;
+    if (end === migration) break;
+  }
+
   return {
     raised: Number(u64(pool.data, 240)) / 1e9,
     threshold: Number(u64(config.data, 264)) / 1e9,
@@ -187,5 +212,6 @@ export async function readDbcState(
     creator: new PublicKey(pool.data.subarray(104, 136)).toBase58(),
     creatorFees: Number(u64(pool.data, 360)) / 1e9,
     totalFees: Number(u64(pool.data, 336)) / 1e9,
+    shape,
   };
 }

@@ -126,6 +126,37 @@ one.
 
 ---
 
+## Security
+
+What the program can and cannot do, and who holds which key.
+
+- **The program never prices anything.** `mint_shares` and `redeem_shares`
+  move the exact token units the recipe names, so there is no oracle to
+  manipulate and no quote to front-run. Deposits round up and redemptions
+  round down, so the vault can only ever hold at least what the outstanding
+  shares claim.
+- **A recipe cannot be edited.** `create_basket` writes the recipe once and
+  takes the share mint's authority; the mint has no freeze authority, and no
+  instruction changes a recipe, pauses a basket or withdraws from a vault.
+  A creator's only ongoing power is receiving the fee cut.
+- **PreStocks transfer fees are grossed up** on deposit, so a fee-bearing
+  component cannot leave the vault short.
+- **Launch tokens are immutable** (`tokenAuthorityOption: Immutable`), and
+  100% of the liquidity that migrates to DAMM v2 is permanently locked. The
+  keys that create a launch are derived from the basket's address and are
+  public by design: they sign once, to create the accounts, and own nothing.
+- **Keys.** The faucet key can only mint the devnet mirror tokens. The
+  treasury key only claims fees. The deploy wallet still holds the program's
+  upgrade authority, which is right for a devnet deployment that is still
+  changing; a mainnet deployment would move it to a multisig and, later, burn
+  it.
+- **Tests and CI.** 10 integration tests cover creation, minting, redeeming,
+  rounding, the fee cut and the dividend multiplier, and run on every push.
+- **Not yet audited.** Tessera is on devnet and holds no real assets. It will
+  not hold real tokenised equities before an audit.
+
+---
+
 ## Why Solana
 
 A blockchain lets four things happen in one transaction: **issuing a new
@@ -215,6 +246,15 @@ market for it from the basket page, and the whole lifecycle runs in the app.
 - **Priced from the basket, not a round number.** `initialMarketCap` and
   `migrationMarketCap` are 0.5x and 20x the basket's NAV per share, converted to
   SOL at Jupiter's live price when the market opens.
+- **A curve with an opening shelf.** `buildCurveWithCustomSqrtPrices` with
+  breakpoints at 1×, 1.26×, 2×, 6.3× and 40× the opening cap and liquidity
+  weights `[16, 6, 2, 1]`: the first fifth of the SOL raised moves the price
+  less than a quarter above the open, half the raise is in before the price
+  reaches a sixth of graduation, then it steepens. Early buyers of a basket are
+  not punished for being early. Four segments, so the config and the pool
+  still fit in one transaction.
+  The chart on every basket page is drawn from the pool config's own segments,
+  so it shows the real shape, not an illustration.
 - **One launch per basket, found without an indexer.** The config and base-mint
   keys are derived from the basket's address (`launchKeys` in `web/lib/dbc.ts`),
   so the pool address follows from the basket alone. Explore marks every basket
@@ -314,6 +354,8 @@ Backpack and others).
 | `/basket/[address]` | One basket: recipe, vault contents, backing check, create and redeem, its Meteora launch market, and the cost of buying in with dollars |
 | `/portfolio` | What you hold, what it is worth, and the companies underneath |
 | `/method` | How it works and the reasoning behind each design choice |
+| `/api/launches` | JSON: every basket's Meteora launch market, with SOL raised, market cap, fees and the curve's own segments, read from the pool accounts |
+| `/api/market` | JSON: the 28 tokenised equities with live prices and the dividend multipliers read from their mints |
 
 Two API routes:
 - `/api/market` batches the mainnet reads (Jupiter prices, plus supply and
@@ -412,6 +454,7 @@ web/lib/mirror.generated.ts          mainnet mint → devnet mirror mint, per ti
 web/lib/dbc.ts                       where each basket's launch lives, read straight from the accounts
 web/lib/launch.ts                    the transaction that opens a launch market
 web/lib/mainnet.ts                   mint accounts read from mainnet through Solami
+web/app/api/launches/route.ts        every launch market as JSON, for terminals
 scripts/go-devnet.sh                 one-command devnet deployment
 scripts/setup-mirror.mjs             creates the xStock mirror mints
 scripts/setup-mirror-prestocks.mjs   the same for PreStocks, transfer fee included

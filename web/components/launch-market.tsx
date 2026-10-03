@@ -73,7 +73,9 @@ export function LaunchMarket() {
           A new basket starts with no shares, and nobody wants to be first to
           assemble every component. So a bonding curve opens in front of it: a
           token priced along a curve that starts at half the basket&rsquo;s NAV
-          and graduates into a permanent Meteora pool at twenty times it.
+          and graduates into a permanent Meteora pool at twenty times it. The
+          curve opens on a shelf, so early money gets nearly the same price, and
+          steepens only once a basket has proven it has takers.
         </p>
         <p className="mt-4 text-sm leading-relaxed text-ivory-faint">
           Any basket&rsquo;s creator can open one from the basket page in a single
@@ -219,7 +221,9 @@ function OpenLaunch({
           Give people a way in before anyone has assembled a share. {info.baseSymbol} trades on
           a Meteora curve priced from this basket&rsquo;s own value: it opens at half the NAV and
           graduates into a Meteora DAMM v2 pool, liquidity locked for good, at twenty times it.
-          You earn half of every trading fee on the curve.
+          The curve starts with a shelf, so the first fifth of the money in moves the price
+          less than a quarter: nobody is punished for being early. You earn half of every
+          trading fee on the curve.
         </p>
       </div>
       <dl className="grid grid-cols-1 gap-px border-y border-rule bg-rule sm:grid-cols-3">
@@ -609,9 +613,9 @@ const H = 220;
 const PAD = { top: 20, right: 16, bottom: 30, left: 16 };
 
 /**
- * Market cap against SOL raised. Liquidity is constant along the one segment
- * this curve has, so SOL raised is linear in the square root of price and the
- * shape is an exact parabola, not an illustration.
+ * Market cap against SOL raised, drawn through the pool's own segments. Within
+ * a segment liquidity is constant, so SOL raised is linear in the square root
+ * of price and the piece between two points is an exact parabola.
  */
 function Curve({ state, error }: { state: DbcState | null; error: string | null }) {
   const { ref: measure, width } = useMeasure<HTMLDivElement>();
@@ -677,22 +681,32 @@ function useTween(target: number): number {
 }
 
 function CurvePlot({ state, W, progress }: { state: DbcState; W: number; progress: number }) {
-  const a = Math.sqrt(state.openCap);
-  const b = Math.sqrt(state.graduationCap);
-  const capAt = (t: number) => (a + (b - a) * t) ** 2;
-  const x = (t: number) => PAD.left + t * (W - PAD.left - PAD.right);
+  const x = (raised: number) => PAD.left + (raised / state.threshold) * (W - PAD.left - PAD.right);
   const y = (cap: number) => H - PAD.bottom - (cap / state.graduationCap) * (H - PAD.top - PAD.bottom);
+  const base = H - PAD.bottom;
+
+  // The curve as a function of SOL raised, following each segment's parabola.
+  const capAt = (raised: number) => {
+    const pts = state.shape;
+    for (let i = 1; i < pts.length; i++) {
+      if (raised <= pts[i].raised || i === pts.length - 1) {
+        const [p, q] = [pts[i - 1], pts[i]];
+        const t = q.raised > p.raised ? Math.min(1, (raised - p.raised) / (q.raised - p.raised)) : 1;
+        return (Math.sqrt(p.cap) + (Math.sqrt(q.cap) - Math.sqrt(p.cap)) * t) ** 2;
+      }
+    }
+    return pts[0]?.cap ?? 0;
+  };
+  const line = (from: number, to: number) =>
+    Array.from({ length: 97 }, (_, i) => from + ((to - from) * i) / 96)
+      .map((f, i) => `${i === 0 ? "M" : "L"}${x(f * state.threshold).toFixed(1)},${y(capAt(f * state.threshold)).toFixed(1)}`)
+      .join(" ");
   // While the marker is moving it sits on the curve itself; at rest it sits at the pool's own price.
   const settled = Math.abs(progress - Math.min(1, state.raised / state.threshold)) < 0.0005;
-  const cap = settled ? state.cap : capAt(progress);
   const raised = settled ? state.raised : progress * state.threshold;
-
-  const line = (from: number, to: number) =>
-    Array.from({ length: 61 }, (_, i) => from + ((to - from) * i) / 60)
-      .map((t, i) => `${i === 0 ? "M" : "L"}${x(t).toFixed(1)},${y(capAt(t)).toFixed(1)}`)
-      .join(" ");
-  const base = H - PAD.bottom;
-  const filled = `${line(0, progress)} L${x(progress).toFixed(1)},${base} L${x(0)},${base} Z`;
+  const cap = settled ? state.cap : capAt(raised);
+  const filled = `${line(0, progress)} L${x(progress * state.threshold).toFixed(1)},${base} L${x(0)},${base} Z`;
+  const px = x(Math.min(raised, state.threshold));
 
   return (
     <svg
@@ -703,15 +717,15 @@ function CurvePlot({ state, W, progress }: { state: DbcState; W: number; progres
       role="img"
       aria-label={`Bonding curve: ${quantity(state.raised, 4)} of ${quantity(state.threshold, 2)} SOL raised, market cap ${quantity(state.cap, 2)} SOL`}
     >
-      <line x1={x(0)} x2={x(1)} y1={base} y2={base} stroke="var(--color-rule)" />
+      <line x1={x(0)} x2={x(state.threshold)} y1={base} y2={base} stroke="var(--color-rule)" />
       <path d={line(0, 1)} fill="none" stroke="var(--color-rule-bright)" strokeWidth="2" strokeDasharray="4 4" />
       <path d={filled} fill="var(--color-gold)" fillOpacity="0.18" />
       <path d={line(0, progress)} fill="none" stroke="var(--color-gold)" strokeWidth="2.5" />
-      <line x1={x(progress)} x2={x(progress)} y1={base} y2={y(cap)} stroke="var(--color-gold)" strokeDasharray="2 3" />
-      <circle cx={x(progress)} cy={y(cap)} r="6" fill="var(--color-gold)" stroke="var(--color-ground-raised)" strokeWidth="2" />
+      <line x1={px} x2={px} y1={base} y2={y(cap)} stroke="var(--color-gold)" strokeDasharray="2 3" />
+      <circle cx={px} cy={y(cap)} r="6" fill="var(--color-gold)" stroke="var(--color-ground-raised)" strokeWidth="2" />
       {/* Past the middle the label sits left of the dot, so it never runs off the edge. */}
       <text
-        x={progress > 0.6 ? x(progress) - 12 : x(progress) + 12}
+        x={progress > 0.6 ? px - 12 : px + 12}
         y={progress > 0.6 ? y(cap) + 20 : y(cap) - 10}
         fill="var(--color-ivory)"
         fontSize="13"
@@ -719,16 +733,16 @@ function CurvePlot({ state, W, progress }: { state: DbcState; W: number; progres
       >
         {state.migrated ? "graduated" : "now"} · {quantity(raised, 4)} SOL in
       </text>
-      <circle cx={x(1)} cy={y(state.graduationCap)} r="4" fill="none" stroke="var(--color-ivory-dim)" strokeWidth="1.5" />
+      <circle cx={x(state.threshold)} cy={y(state.graduationCap)} r="4" fill="none" stroke="var(--color-ivory-dim)" strokeWidth="1.5" />
       {progress < 0.85 && (
-        <text x={x(1) - 10} y={y(state.graduationCap) + 4} fill="var(--color-ivory-dim)" fontSize="12" textAnchor="end">
+        <text x={x(state.threshold) - 10} y={y(state.graduationCap) + 4} fill="var(--color-ivory-dim)" fontSize="12" textAnchor="end">
           graduates to Meteora DAMM v2
         </text>
       )}
       <text x={x(0)} y={H - 8} fill="var(--color-ivory-faint)" fontSize="12">
         0 SOL raised
       </text>
-      <text x={x(1)} y={H - 8} fill="var(--color-ivory-faint)" fontSize="12" textAnchor="end">
+      <text x={x(state.threshold)} y={H - 8} fill="var(--color-ivory-faint)" fontSize="12" textAnchor="end">
         {quantity(state.threshold, 2)} SOL
       </text>
     </svg>
