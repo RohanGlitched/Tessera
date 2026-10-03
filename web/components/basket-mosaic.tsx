@@ -29,7 +29,7 @@ export function BasketMosaic({
   tiles,
   height = 260,
   onRemove,
-  emptyHint = "Pick a ticker to lay the first tessera.",
+  emptyHint = "Pick a ticker to add the first holding.",
 }: {
   tiles: BasketTile[];
   height?: number;

@@ -1,29 +1,45 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { useBaskets } from "@/lib/use-baskets";
 import { BasketCard } from "./basket-card";
 import { useOpenLaunches } from "@/lib/use-launches";
 import { CardSkeletons } from "./skeletons";
 
+/** Shown first, in this order; any other basket only fills a gap if one cannot be read. */
+const FEATURED = [
+  "5Z8XUzGVJjcYPxPZ6Hfxx8uJRNKibFcmZd7yStuSPr1p",
+  "6cUCq5GdhrdLGqJiy63iuc1epLFrEmAYQ45JvYEYGbg3",
+  "EQRdi2tYRbrdbWdxEV3Yv6oph9JVVB27gpNFr5DkrohG",
+];
+
 export function FeaturedBaskets() {
   const { baskets, error, loading } = useBaskets();
-  const launched = useOpenLaunches(baskets);
+  const shown = useMemo(() => {
+    if (!baskets) return null;
+    const picked = FEATURED.map((a) => baskets.find((b) => b.address === a)).filter(
+      (b): b is NonNullable<typeof b> => b != null,
+    );
+    const rest = baskets.filter((b) => !FEATURED.includes(b.address));
+    return [...picked, ...rest].slice(0, 3);
+  }, [baskets]);
+  const launched = useOpenLaunches(shown);
 
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="display text-title text-ivory">Laid so far</h2>
+          <h2 className="display text-title text-ivory">Baskets on Tessera</h2>
           <p className="mt-2 text-sm text-ivory-dim">
-            Every basket, read straight from the program.
+            Read straight from the program. Open one to see its vault, or create shares in it.
           </p>
         </div>
         <Link
           href="/explore"
           className="border border-rule px-4 py-2.5 text-sm text-ivory-dim transition-colors hover:border-rule-bright hover:text-ivory"
         >
-          See all
+          {baskets ? `See all ${baskets.length}` : "See all"}
         </Link>
       </div>
 
@@ -37,7 +53,7 @@ export function FeaturedBaskets() {
 
       {baskets && baskets.length === 0 && (
         <div className="mt-10 border border-dashed border-rule-bright/60 px-8 py-14 text-center">
-          <p className="display text-xl text-ivory">Nobody has laid one yet.</p>
+          <p className="display text-xl text-ivory">Nobody has created one yet.</p>
           <p className="mx-auto mt-3 max-w-[46ch] text-sm leading-relaxed text-ivory-dim">
             The program is deployed and waiting. The first basket takes one
             transaction and about four minutes.
@@ -46,14 +62,14 @@ export function FeaturedBaskets() {
             href="/compose"
             className="mt-7 inline-block border border-gold bg-gold px-5 py-3 text-sm text-ground-deep transition-colors hover:bg-[#c79a2e]"
           >
-            Lay the first one
+            Create the first one
           </Link>
         </div>
       )}
 
-      {baskets && baskets.length > 0 && (
+      {shown && shown.length > 0 && (
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {baskets.slice(0, 6).map((basket) => (
+          {shown.map((basket) => (
             <BasketCard key={basket.address} basket={basket} launched={launched.has(basket.address)} />
           ))}
         </div>

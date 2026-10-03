@@ -7,7 +7,7 @@ import { MarketClock } from "./market-clock";
 import { ConnectButton } from "./connect-button";
 
 const NAV = [
-  { href: "/compose", label: "Compose" },
+  { href: "/compose", label: "Create" },
   { href: "/explore", label: "Explore" },
   { href: "/portfolio", label: "Portfolio" },
   { href: "/method", label: "How it works" },

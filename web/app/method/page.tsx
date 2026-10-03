@@ -449,7 +449,7 @@ export default async function MethodPage() {
             href="/compose"
             className="mt-6 inline-block border border-gold bg-gold px-5 py-3 text-sm text-ground-deep transition-colors hover:bg-[#c79a2e]"
           >
-            Lay a basket
+            Create a basket
           </Link>
         </div>
       </section>

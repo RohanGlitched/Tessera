@@ -50,11 +50,11 @@ export default function Home() {
             An index fund is a list of companies and a set of weights.
           </h1>
           <p className="mt-7 max-w-[46ch] text-lg leading-relaxed text-ivory-dim">
-            Pick from twenty tokenised equities, plus pre-IPO SPVs over OpenAI,
-            Anthropic and SpaceX via PreStocks. Tessera mints your list as one
-            token, backed share for share in a vault anyone can read. Buyers hold
-            a single position instead of eight. You earn a fee on every share
-            created.
+            Tessera is an ETF launchpad on Solana. Pick up to eight tokenised
+            stocks and pre-IPO companies such as OpenAI and SpaceX, set the
+            weights, and launch them as one token. Every share is backed by the
+            real tokens in an on-chain vault and can be redeemed for them at any
+            time. You earn a fee on every share created.
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-4">
             <ComposeCta />
@@ -62,7 +62,7 @@ export default function Home() {
               href="/explore"
               className="border border-rule px-5 py-3 text-sm text-ivory-dim transition-colors hover:border-rule-bright hover:text-ivory"
             >
-              See what people have laid
+              Explore baskets
             </Link>
           </div>
           <p className="mt-7 text-sm leading-relaxed text-ivory-faint">

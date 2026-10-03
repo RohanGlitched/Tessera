@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
-export const alt = "Tessera: index funds anyone can lay, on Solana";
+export const alt = "Tessera: the ETF launchpad on Solana";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -60,11 +60,11 @@ export default async function Image() {
             An index fund is a list of companies and a set of weights.
           </div>
           <div style={{ fontSize: 24, lineHeight: 1.45, marginTop: 32, color: "#b3ab9c" }}>
-            Compose xStocks and pre-IPO PreStocks into one token, backed share for
-            share in a vault anyone can read.
+            Tokenised stocks and pre-IPO companies as one fully backed token,
+            with a Meteora market from day one.
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: "auto", fontSize: 20, color: "#7c8090" }}>
-            <span style={{ color: "#b18827" }}>Built on Solana</span>
+            <span style={{ color: "#b18827" }}>The ETF launchpad on Solana</span>
             <span>·</span>
             <span>teserra.world</span>
           </div>

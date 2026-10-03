@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Composer } from "@/components/composer";
 
 export const metadata: Metadata = {
-  title: "Lay a basket",
+  title: "Create a basket",
   description:
     "Choose tokenised equities and weights, and mint the result as one token backed share for share.",
 };

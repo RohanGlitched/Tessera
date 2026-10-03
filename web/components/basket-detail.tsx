@@ -21,6 +21,7 @@ import {
 import { symbolForWriteMint } from "@/lib/mirror";
 import { PRESTOCK_SYMBOLS, BY_SYMBOL_PRESTOCKS } from "@/lib/prestocks";
 import { BasketLaunch } from "./launch-market";
+import { ConnectButton } from "./connect-button";
 import { explorerAddress, explorerTx } from "@/lib/config";
 import { slotColor } from "@/lib/palette";
 import {
@@ -138,7 +139,7 @@ function Loaded({
               {basket.name}
             </h1>
             <p className="tnum mt-3 text-sm text-ivory-faint">
-              {basket.symbol} · laid {timeAgo(basket.createdAt)} by{" "}
+              {basket.symbol} · created {timeAgo(basket.createdAt)} by{" "}
               <a
                 href={explorerAddress(basket.creator)}
                 target="_blank"
@@ -316,7 +317,7 @@ function Composition({
     <section>
       <h2 className="display text-title text-ivory">The recipe</h2>
       <p className="mt-3 max-w-[60ch] text-sm leading-relaxed text-ivory-dim">
-        These numbers were written once, when the basket was laid, and cannot be
+        These numbers were written once, when the basket was created, and cannot be
         changed. The weight on the right drifts as prices move; nothing rebalances
         it, because rebalancing would mean somebody deciding to trade your holdings.
       </p>
@@ -682,8 +683,9 @@ function TradePanel({
         </label>
 
         <p className="tnum mt-2 text-xs text-ivory-faint">
-          You hold {quantity(Number(shareBalance) / ONE_SHARE, 6)}{" "}
-          {basket.symbol}
+          {connected
+            ? `You hold ${quantity(Number(shareBalance) / ONE_SHARE, 6)} ${basket.symbol}`
+            : `${basket.symbol} shares`}
           {navPerShare != null && valid
             ? ` · about ${money(navPerShare * shares)} of components`
             : ""}
@@ -761,7 +763,7 @@ function TradePanel({
           </div>
         )}
 
-        {mode === "redeem" && !enoughShares && valid && (
+        {mode === "redeem" && !enoughShares && valid && !signature && (
           <p className="mt-5 text-sm leading-relaxed text-loss">
             {shareBalance === 0n
               ? `You hold no ${basket.symbol} to redeem.`
@@ -772,6 +774,11 @@ function TradePanel({
           </p>
         )}
 
+        {!connected ? (
+          <div className="mt-6">
+            <ConnectButton block label={`Connect a wallet to ${mode} shares`} />
+          </div>
+        ) : (
         <button
           type="button"
           disabled={blocked || busy}
@@ -789,12 +796,11 @@ function TradePanel({
                 : mode === "create"
                   ? "Creating…"
                   : "Redeeming…")
-            : !connected
-              ? "Connect a wallet"
-              : mode === "create"
-                ? `Create ${basket.symbol}`
-                : `Redeem ${basket.symbol}`}
+            : mode === "create"
+              ? `Create ${basket.symbol}`
+              : `Redeem ${basket.symbol}`}
         </button>
+        )}
 
         {error && (
           <p className="mt-4 border-l-2 border-loss pl-3 text-sm leading-relaxed text-loss">

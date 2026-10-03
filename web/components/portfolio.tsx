@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useBaskets } from "@/lib/use-baskets";
+import { LaunchHoldings } from "./launch-holdings";
 import { useBalances } from "@/lib/use-balances";
 import { valueBasket } from "@/lib/basket-view";
 import { useMarket } from "./market-provider";
@@ -352,7 +353,7 @@ export function Portfolio() {
         <div className="mt-12 border border-dashed border-rule-bright/60 px-8 py-16 text-center">
           <p className="display text-xl text-ivory">Nothing here yet.</p>
           <p className="mx-auto mt-3 max-w-[50ch] text-sm leading-relaxed text-ivory-dim">
-            Claim a set of test tokens, then lay a basket or create shares in one
+            Claim a set of test tokens, then create a basket or create shares in one
             that already exists.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-4">
@@ -360,7 +361,7 @@ export function Portfolio() {
               href="/compose"
               className="border border-gold bg-gold px-5 py-3 text-sm text-ground-deep transition-colors hover:bg-[#c79a2e]"
             >
-              Lay a basket
+              Create a basket
             </Link>
             <FaucetButton
               symbols={COMPOSABLE.slice(0, 8).map((s) => s.symbol)}
@@ -532,6 +533,8 @@ export function Portfolio() {
           </div>
         </section>
       )}
+
+      <LaunchHoldings baskets={baskets} />
 
       {view.loose.length > 0 && (
         <section className="mt-16">

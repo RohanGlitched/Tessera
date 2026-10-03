@@ -115,7 +115,7 @@ export function HomeStats() {
 }
 
 export function ComposeCta({
-  children = "Compose a basket",
+  children = "Create a basket",
 }: {
   children?: React.ReactNode;
 }) {

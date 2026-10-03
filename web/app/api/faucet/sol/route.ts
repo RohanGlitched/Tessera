@@ -10,11 +10,12 @@ import { WRITE_CLUSTER, WRITE_RPC } from "@/lib/config";
 import { clientIp, faucetKeypair } from "@/lib/faucet-server";
 
 /**
- * Enough devnet SOL to try everything once: lay a basket, create shares, open a
- * launch market and buy on it. Only for wallets that are nearly empty, so it
+ * Enough devnet SOL to try everything with room to spare: create a basket and
+ * shares, open a launch market, buy on it and redeem. The whole run costs about
+ * 0.04 SOL, most of it rent. Only for wallets that are nearly empty, so it
  * covers a first visit rather than funding anyone's testing.
  */
-const GRANT = 0.04 * LAMPORTS_PER_SOL;
+const GRANT = 0.08 * LAMPORTS_PER_SOL;
 const ONLY_BELOW = 0.01 * LAMPORTS_PER_SOL;
 /** Keep enough back that the token faucet can still pay for token accounts. */
 const RESERVE = 0.3 * LAMPORTS_PER_SOL;

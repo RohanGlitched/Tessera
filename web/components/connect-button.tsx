@@ -6,7 +6,24 @@ import { WalletReadyState } from "@solana/wallet-adapter-base";
 import { shortAddress } from "@/lib/format";
 import { WRITE_CLUSTER } from "@/lib/config";
 
-export function ConnectButton() {
+/** Wallet apps open a page in their own browser from these links, which is how a phone connects. */
+function walletBrowseLinks() {
+  const url = encodeURIComponent(window.location.href);
+  const ref = encodeURIComponent(window.location.origin);
+  return [
+    { name: "Phantom", href: `https://phantom.app/ul/browse/${url}?ref=${ref}` },
+    { name: "Solflare", href: `https://solflare.com/ul/v1/browse/${url}?ref=${ref}` },
+  ];
+}
+
+export function ConnectButton({
+  block = false,
+  label = "Connect wallet",
+}: {
+  /** Full width and filled, for when connecting is the next step on a page. */
+  block?: boolean;
+  label?: string;
+}) {
   const { wallets, select, connect, connected, connecting, publicKey, disconnect, wallet } =
     useWallet();
   const [open, setOpen] = useState(false);
@@ -101,25 +118,47 @@ export function ConnectButton() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         disabled={connecting}
-        className="border border-gold/60 bg-gold/10 px-4 py-2 text-sm text-ivory transition-colors hover:bg-gold/20 disabled:opacity-60"
+        className={
+          block
+            ? "w-full border border-gold bg-gold px-5 py-3.5 text-sm text-ground-deep transition-colors hover:bg-[#c79a2e] disabled:opacity-60"
+            : "border border-gold/60 bg-gold/10 px-4 py-2 text-sm text-ivory transition-colors hover:bg-gold/20 disabled:opacity-60"
+        }
       >
-        {connecting ? "Connecting…" : "Connect wallet"}
+        {connecting ? "Connecting…" : label}
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1.5 w-64 border border-rule bg-ground-raised p-1 shadow-2xl shadow-black/50">
+        <div
+          className={`absolute top-full z-50 mt-1.5 border border-rule bg-ground-raised p-1 shadow-2xl shadow-black/50 ${
+            block ? "left-0 right-0" : "right-0 w-64"
+          }`}
+        >
           {installed.length === 0 ? (
-            <p className="px-3 py-3 text-sm leading-relaxed text-ivory-dim">
-              No Solana wallet detected in this browser.{" "}
-              <a
-                href="https://phantom.app/download"
-                target="_blank"
-                rel="noreferrer"
-                className="text-gold underline decoration-gold/40 underline-offset-2"
-              >
-                Install Phantom
-              </a>{" "}
-              and reload.
-            </p>
+            <div className="px-3 py-3 text-sm leading-relaxed text-ivory-dim">
+              <p>No Solana wallet in this browser. On a phone, open Tessera inside your wallet app:</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {walletBrowseLinks().map((w) => (
+                  <a
+                    key={w.name}
+                    href={w.href}
+                    className="border border-rule-bright px-3 py-2 text-xs text-ivory transition-colors hover:border-gold hover:text-gold"
+                  >
+                    Open in {w.name}
+                  </a>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-ivory-faint">
+                On a computer,{" "}
+                <a
+                  href="https://phantom.app/download"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-gold underline decoration-gold/40 underline-offset-2"
+                >
+                  install Phantom
+                </a>{" "}
+                and reload.
+              </p>
+            </div>
           ) : (
             installed.map((w) => (
               <button

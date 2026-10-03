@@ -18,6 +18,7 @@ import { buildCreateBasket, sendSteps, explainError } from "@/lib/tx";
 import { MAX_COMPONENTS, MAX_CREATOR_FEE_BPS, explorerTx } from "@/lib/config";
 import type { Quote } from "@/lib/market";
 import { MosaicSkeleton } from "./skeletons";
+import { ConnectButton } from "./connect-button";
 
 type Pick = { symbol: string; slot: number };
 
@@ -368,7 +369,7 @@ export function Composer() {
     return (
       <div className="mx-auto max-w-[60rem] py-20">
         <div className="text-center">
-          <p className="text-sm text-gold">Laid</p>
+          <p className="text-sm text-gold">Created</p>
           <h1 className="display mt-4 text-title text-ivory">{trimmedName} exists.</h1>
           <p className="mx-auto mt-5 max-w-[42rem] text-base leading-relaxed text-ivory-dim">
             The recipe is written into a program account and the share mint&apos;s authority
@@ -424,7 +425,7 @@ export function Composer() {
           the market picture needs to be, and a market you are asked to click
           should fill that space rather than leave it blank. */}
       <div className="flex flex-col">
-        <h1 className="display text-title text-ivory">Lay a basket</h1>
+        <h1 className="display text-title text-ivory">Create a basket</h1>
         <p className="mt-4 max-w-[56ch] text-base leading-relaxed text-ivory-dim">
           Pick a tile to put that company in the basket, or pick it from the
           Table, then set the weights. Up to {MAX_COMPONENTS} components, and every one of them is
@@ -573,7 +574,7 @@ export function Composer() {
               tiles={tiles}
               height={220}
               onRemove={(key) => toggleSymbol(key)}
-              emptyHint="Pick a tile from the market to lay the first tessera."
+              emptyHint="Tap a company in the market to add it."
             />
 
             {/* weights */}
@@ -708,11 +709,6 @@ export function Composer() {
                 {error}
               </p>
             )}
-            {!connected && (
-              <p className="mb-4 text-sm text-ivory-dim">
-                Connect a wallet to lay the basket.
-              </p>
-            )}
             {connected && problems.length > 0 && (
               <ul className="mb-4 space-y-1 text-sm text-ivory-faint">
                 {problems.slice(0, 2).map((p) => (
@@ -720,6 +716,9 @@ export function Composer() {
                 ))}
               </ul>
             )}
+            {!connected ? (
+              <ConnectButton block label="Connect a wallet to create it" />
+            ) : (
             <button
               type="button"
               onClick={() => void create()}
@@ -728,12 +727,13 @@ export function Composer() {
             >
               {submitting
                 ? step && step.total > 1
-                  ? `Laying the basket · ${Math.min(step.done + 1, step.total)} of ${
+                  ? `Creating the basket · ${Math.min(step.done + 1, step.total)} of ${
                       step.total
                     }`
-                  : "Laying the basket…"
-                : "Lay the basket"}
+                  : "Creating the basket…"
+                : "Create the basket"}
             </button>
+            )}
             <p className="mt-3 text-xs leading-relaxed text-ivory-faint">
               It creates the share mint, names it, hands its authority to the
               basket, and writes the recipe. Nothing is minted yet. A Solana

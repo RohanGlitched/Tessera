@@ -81,7 +81,7 @@ export function BasketCard({ basket, launched = false }: { basket: Basket; launc
           </dd>
         </div>
         <div>
-          <dt className="text-ivory-faint">Mints</dt>
+          <dt className="text-ivory-faint">Creations</dt>
           <dd className="tnum mt-0.5 text-ivory-dim">
             {count(Number(basket.mintCount))}
           </dd>

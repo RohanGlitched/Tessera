@@ -69,9 +69,13 @@ export function DevnetNotice() {
     <div role="status" className="border-b border-gold/30 bg-gold/[0.07]">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-5 py-3 text-sm sm:px-8 md:flex-row md:items-center md:gap-6">
         <p className="leading-relaxed text-ivory-dim md:flex-1">
-          <span className="text-ivory">This wallet has no test SOL yet.</span> Tessera runs on
-          Solana devnet while it is in testing, so trying it is free: one click sends enough to
-          lay a basket, create shares and open a launch market.
+          <span className="text-ivory">
+            {balance.lamports > 0
+              ? "This wallet is running low on test SOL."
+              : "This wallet has no test SOL yet."}
+          </span>{" "}
+          Tessera runs on Solana devnet while it is in testing, so trying it is free: one click
+          sends enough to create a basket, create shares and open a launch market.
           {error && <span className="mt-1 block text-loss">{error}</span>}
         </p>
         <div className="flex shrink-0 flex-wrap items-center gap-3">

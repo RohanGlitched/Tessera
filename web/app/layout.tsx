@@ -32,15 +32,15 @@ const archivo = Archivo({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Tessera — index funds anyone can lay",
+    default: "Tessera — the ETF launchpad on Solana",
     template: "%s · Tessera",
   },
   description:
-    "Compose tokenised stocks into one tradeable token, backed share for share in a vault you can audit. Built on Solana.",
+    "Turn tokenised stocks and pre-IPO companies into one fully backed token on Solana, and give it a Meteora market from day one.",
   openGraph: {
     title: "Tessera",
     description:
-      "Compose tokenised stocks into one tradeable token, backed share for share.",
+      "The ETF launchpad on Solana: tokenised stocks and pre-IPO companies as one fully backed token.",
     type: "website",
   },
   twitter: { card: "summary_large_image" },

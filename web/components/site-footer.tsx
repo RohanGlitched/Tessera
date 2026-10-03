@@ -19,7 +19,7 @@ export function SiteFooter() {
 
           <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm">
             <Link href="/compose" className="text-ivory-dim hover:text-ivory">
-              Compose a basket
+              Create a basket
             </Link>
             <Link href="/explore" className="text-ivory-dim hover:text-ivory">
               Explore baskets

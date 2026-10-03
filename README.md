@@ -56,7 +56,7 @@ Everything below runs on devnet and costs nothing.
    wallet, such as [Phantom](https://phantom.app/download). The market on the
    home page is live mainnet data.
 2. **Press Get free test SOL.** A new wallet gets a banner with one button that
-   sends it 0.04 devnet SOL, enough to try everything below.
+   sends it 0.08 devnet SOL, enough to try everything below.
    [faucet.solana.com](https://faucet.solana.com) works too.
 3. **Buy on a launch curve.** In the Meteora section of the
    [home page](https://www.teserra.world/#launch), pick an amount and press
@@ -70,9 +70,9 @@ Everything below runs on devnet and costs nothing.
    choose how many shares, and press **Create BIG5**. The vault holdings and the
    backing check update as soon as the transaction lands.
 6. **Redeem them** from the same panel. Every component comes back to your wallet.
-7. **Launch your own index fund.** On [Compose](https://www.teserra.world/compose),
+7. **Launch your own index fund.** On [Create](https://www.teserra.world/compose),
    tap tiles (or pick from the Table view), drag the weights, name the token, set
-   a creator fee and press **Lay the basket**. It gets its own page and its own
+   a creator fee and press **Create the basket**. It gets its own page and its own
    link preview.
 8. **Open its launch market.** The next screen offers **Open the market**. One
    signature puts a Meteora curve in front of your basket, priced from its NAV.

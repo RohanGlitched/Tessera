@@ -88,7 +88,7 @@ export function Explorer() {
           </h1>
           <p className="mt-4 max-w-[54ch] text-base leading-relaxed text-ivory-dim">
             Read straight from the program. Nothing here is listed,
-            approved, or promoted. If somebody laid it, it is on this page.
+            approved, or promoted. If somebody created it, it is on this page.
           </p>
         </div>
         {baskets && baskets.length > 0 && (
@@ -159,14 +159,14 @@ export function Explorer() {
         <div className="mt-12 border border-dashed border-rule-bright/60 px-8 py-16 text-center">
           <p className="display text-xl text-ivory">The program is empty.</p>
           <p className="mx-auto mt-3 max-w-[46ch] text-sm leading-relaxed text-ivory-dim">
-            No baskets have been laid on this cluster yet. Laying one takes a
+            No baskets exist on this cluster yet. Creating one takes a
             single transaction.
           </p>
           <Link
             href="/compose"
             className="mt-7 inline-block border border-gold bg-gold px-5 py-3 text-sm text-ground-deep transition-colors hover:bg-[#c79a2e]"
           >
-            Lay the first one
+            Create the first one
           </Link>
         </div>
       )}
