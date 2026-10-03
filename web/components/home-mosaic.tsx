@@ -35,8 +35,13 @@ export function HomeMosaic() {
             snapshot.quotes.reduce((a, q) => a + q.liquidity, 0),
           )}{" "}
           of liquidity
-          {snapshot.blockId != null && (
-            <> · mainnet slot {count(snapshot.blockId)}</>
+          {snapshot.chain ? (
+            <>
+              {" "}· multipliers read from the mints at mainnet slot {count(snapshot.chain.slot)}
+              {snapshot.chain.via === "solami" ? " via Solami" : ""}
+            </>
+          ) : (
+            snapshot.blockId != null && <> · mainnet slot {count(snapshot.blockId)}</>
           )}
         </span>
         <span>

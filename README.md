@@ -88,7 +88,8 @@ contain NVIDIA show up as one NVIDIA exposure.
 
 | | |
 |---|---|
-| Prices, 24-hour moves, liquidity, holders, dividend multipliers | **Solana mainnet, live** |
+| Prices, 24-hour moves, liquidity, holders | **Solana mainnet, live, via Jupiter** |
+| Dividend multipliers and token supply | **Read from the mint accounts on mainnet, via Solami** |
 | The 28 tokenised equities you can compose | **Real xStocks by Backed Finance (20) and pre-IPO PreStocks (8)** |
 | Creating and redeeming shares | **Devnet**, against mirror mints (see below) |
 | The program's arithmetic | **10 integration tests, run in CI on every push** |
@@ -226,6 +227,17 @@ was opened by `scripts/dbc-launch.mjs` and is the one on the home page.
 On the roadmap: letting a graduated pool fund the basket's first creation, so
 early buyers roll straight into redeemable shares.
 
+### Solami: mainnet reads straight from the mints
+
+Every basket is valued by its components' dividend multipliers, and a multiplier
+lives in the Token-2022 `ScaledUiAmountConfig` extension of each mint account.
+`/api/market` reads all 28 mint accounts in one `getMultipleAccounts` call through
+Solami's mainnet RPC (`web/lib/mainnet.ts`), unpacks the extension, and applies a
+scheduled multiplier step once its time has passed. Those values replace the
+aggregator's copy before anything is priced, and each token's value on Solana is
+computed as on-chain supply × multiplier × price. The home page footer shows the
+mainnet slot the mints were read at. The key stays on the server.
+
 ---
 
 ## The program
@@ -318,6 +330,10 @@ cp .env.example .env.local
 pnpm build && pnpm start          # http://localhost:3000
 ```
 
+To read mainnet through Solami, put a free key from [solami.dev](https://solami.dev)
+in `SOLAMI_API_KEY` in `.env.local`; without one the app falls back to the public
+mainnet endpoint.
+
 Everything works locally except the test-token faucet, which needs the mirror
 mints' authority key. To get test tokens, claim them once on the
 [hosted app](https://www.teserra.world/portfolio). They land in your wallet
@@ -375,6 +391,7 @@ web/lib/prestocks.ts                 the 8 PreStocks pre-IPO mints
 web/lib/mirror.generated.ts          mainnet mint → devnet mirror mint, per ticker
 web/lib/dbc.ts                       where each basket's launch lives, read straight from the accounts
 web/lib/launch.ts                    the transaction that opens a launch market
+web/lib/mainnet.ts                   mint accounts read from mainnet through Solami
 scripts/go-devnet.sh                 one-command devnet deployment
 scripts/setup-mirror.mjs             creates the xStock mirror mints
 scripts/setup-mirror-prestocks.mjs   the same for PreStocks, transfer fee included

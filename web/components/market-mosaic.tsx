@@ -371,6 +371,7 @@ function TileTooltip({
         <Row label="Liquidity" value={moneyCompact(quote.liquidity)} />
         <Row label="24h volume" value={moneyCompact(quote.volume24h)} />
         <Row label="Holders" value={count(quote.holders)} />
+        <Row label="Value on Solana" value={moneyCompact(quote.onChainMcap)} />
         {quote.paysDividend && (
           <Row
             label="Dividends accrued"

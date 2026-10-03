@@ -109,12 +109,18 @@ export type MarketSnapshot = {
   blockId: number | null;
   /** Tickers we asked for and did not get back. Shown, never hidden. */
   missing: string[];
+  /**
+   * The mainnet slot the mint accounts were read at, and through which RPC.
+   * Null when the chain read failed and the multipliers are Jupiter's copy.
+   */
+  chain: { slot: number; via: "solami" | "public" } | null;
 };
 
 // Public equities and pre-IPO SPV tokens, priced the same way: both are real
 // mints with real Jupiter liquidity, and neither is a fixture.
 const UNIVERSE: XStock[] = [...XSTOCKS, ...PRESTOCKS.map(asXStock)];
-const mints = UNIVERSE.map((s) => s.mint);
+export const UNIVERSE_MINTS = UNIVERSE.map((s) => s.mint);
+const mints = UNIVERSE_MINTS;
 
 async function getJson<T>(url: string): Promise<T | null> {
   try {
@@ -235,7 +241,42 @@ export async function fetchMarket(): Promise<MarketSnapshot> {
     fetchedAt: Math.floor(Date.now() / 1000),
     blockId: blockIds.length ? Math.max(...blockIds) : null,
     missing,
+    chain: null,
   };
+}
+
+/**
+ * Replace each multiplier with the one read from its mint account. The mint is
+ * the authority on what a raw unit is worth; an aggregator only relays it.
+ */
+export function withChainMultipliers(
+  snapshot: MarketSnapshot,
+  chain: {
+    slot: number;
+    via: "solami" | "public";
+    mints: Map<
+      string,
+      { supply: number; multiplier: number; nextMultiplier: number | null; nextMultiplierAt: string | null }
+    >;
+  } | null,
+): MarketSnapshot {
+  if (!chain) return snapshot;
+  const quotes = snapshot.quotes.map((q) => {
+    const mint = chain.mints.get(q.mint);
+    if (!mint) return q;
+    const dividend = !PRESTOCK_SYMBOLS.has(q.symbol) && mint.multiplier > 1;
+    return {
+      ...q,
+      multiplier: mint.multiplier,
+      nextMultiplier: mint.nextMultiplier,
+      nextMultiplierAt: mint.nextMultiplierAt,
+      accruedYieldPct: dividend ? (mint.multiplier - 1) * 100 : 0,
+      paysDividend: dividend,
+      // The price is per UI token, which is the raw supply restated by the multiplier.
+      onChainMcap: mint.supply * mint.multiplier * q.price,
+    };
+  });
+  return { ...snapshot, quotes, chain: { slot: chain.slot, via: chain.via } };
 }
 
 /** Look up one ticker in a snapshot. */
