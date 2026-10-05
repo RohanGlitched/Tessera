@@ -1,16 +1,32 @@
-# Tessera
+<div align="center">
+
+<img src=".github/readme/cover.png" alt="Tessera: an index fund is a list of companies and a set of weights. The live market mosaic of tokenised equities on Solana." width="100%">
+
+<br>
 
 [![CI](https://github.com/RohanGlitched/Tessera/actions/workflows/ci.yml/badge.svg)](https://github.com/RohanGlitched/Tessera/actions/workflows/ci.yml)
+[![Solana devnet](https://img.shields.io/badge/Solana-devnet-9945FF?logo=solana&logoColor=white)](https://explorer.solana.com/address/F8QLTZPe9mJuPgXCbccnU9G2kMSEE4inygdUw3QZbrQ?cluster=devnet)
+[![Anchor 0.31](https://img.shields.io/badge/Anchor-0.31-1f2747)](programs/tessera/src/lib.rs)
+[![Token-2022](https://img.shields.io/badge/Token--2022-vaults%20%C2%B7%20scaled%20UI%20amounts-b18827)](#why-solana)
+[![Meteora DBC](https://img.shields.io/badge/Meteora-launch%20curves-05aa9e)](#meteora-dbc-a-launch-market-for-every-basket)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-000?logo=nextdotjs&logoColor=white)](web/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-ede6d6.svg)](LICENSE)
+
+**[Open the app](https://www.teserra.world)** · **[Program on Solana Explorer](https://explorer.solana.com/address/F8QLTZPe9mJuPgXCbccnU9G2kMSEE4inygdUw3QZbrQ?cluster=devnet)** · **[How it works, in the app](https://www.teserra.world/method)**
+
+**[Try it in two minutes](#try-it-in-two-minutes)** · **[What is live and what runs on devnet](#what-is-live-and-what-runs-on-devnet)** · **[Security](#security)** · **[Run it yourself](#run-it-yourself)**
+
+</div>
+
+---
 
 **Anyone can launch an index fund on Solana. It takes one transaction, and nobody has to trust the person who launched it.**
 
-**[Open the app](https://www.teserra.world)** · [Program on Solana Explorer](https://explorer.solana.com/address/F8QLTZPe9mJuPgXCbccnU9G2kMSEE4inygdUw3QZbrQ?cluster=devnet) · [Try it in two minutes](#try-it-in-two-minutes) · [Run it yourself](#run-it-yourself)
-
-![Tessera: the live market mosaic of tokenised equities](.github/readme/home.png)
-
 An index fund is a list of companies and a set of weights. Tessera turns that
 list into one token, backed share for share by real tokenised stocks in a vault
-anyone can read.
+anyone can read. Prices, premiums and dividend multipliers are read from Solana
+mainnet on every load; creation and redemption settle on devnet against faithful
+mirror mints until the program is audited.
 
 ## How it works
 
@@ -44,9 +60,16 @@ flowchart LR
    sits in any wallet and can be sold. The creator earns up to 1% of every
    creation, paid in new shares and never out of the vault.
 
-![A basket page: recipe, vault holdings and net asset value](.github/readme/basket.png)
+## Screens
 
-![The basket's Meteora launch market: the live curve, a buy, and the creator's fee claim](.github/readme/launch.png)
+| | |
+|---|---|
+| <img src=".github/readme/home.png" alt="Home: the live market mosaic of 28 tokenised equities, sized by on-chain liquidity"> | <img src=".github/readme/basket.png" alt="A basket page: recipe, vault holdings and net asset value"> |
+| **Home.** The market as a mosaic: tile area is on-chain liquidity, colour the 24-hour move, every figure from mainnet. | **A basket.** The recipe, what the vault holds, the backing check, and create and redeem in kind. |
+
+<img src=".github/readme/launch.png" alt="The basket's Meteora launch market: the live curve, a buy, and the creator's fee claim" width="100%">
+
+**A launch market.** The Meteora curve in front of a new basket, drawn from the pool config's own segments, with a buy and the creator's fee claim.
 
 ---
 
