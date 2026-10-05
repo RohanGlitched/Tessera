@@ -3,6 +3,10 @@ import { HomeMosaic, HomeStats, ComposeCta } from "@/components/home-mosaic";
 import { MarketClock } from "@/components/market-clock";
 import { FeaturedBaskets } from "@/components/featured-baskets";
 import { LaunchMarket } from "@/components/launch-market";
+import { MosaicBand } from "@/components/mosaic-band";
+import { Anatomy } from "@/components/home-anatomy";
+import { Dividends, Premiums } from "@/components/home-market-facts";
+import { Keys, Revenue } from "@/components/home-ledgers";
 
 const LIFE = [
   {
@@ -119,9 +123,50 @@ export default function Home() {
         </p>
       </section>
 
+      <MosaicBand />
+
+      {/* --------------------------------------------------------- anatomy */}
+      <section className="reveal py-20">
+        <Anatomy />
+      </section>
+
       {/* ---------------------------------------------------------- launch */}
       <section id="launch" className="reveal scroll-mt-24 border-t border-rule py-20">
         <LaunchMarket />
+      </section>
+
+      <MosaicBand />
+
+      {/* -------------------------------------------------------- premiums */}
+      <section className="reveal py-20">
+        <div className="max-w-[46ch]">
+          <h2 className="display text-title text-ivory">Two prices for one company.</h2>
+          <p className="mt-5 text-base leading-relaxed text-ivory-dim">
+            Every token here has the price it trades at on Solana and the price of the listed share
+            behind it. The gap between them is the premium. A basket cannot wish it away, so Tessera
+            shows it on every component and values a share both ways.
+          </p>
+        </div>
+        <div className="mt-10">
+          <Premiums />
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------- dividends */}
+      <section className="reveal border-t border-rule py-20">
+        <div className="max-w-[46ch]">
+          <h2 className="display text-title text-ivory">A dividend is a number going up.</h2>
+          <p className="mt-5 text-base leading-relaxed text-ivory-dim">
+            Tokenised equities pay dividends by raising a multiplier on the mint, not by sending
+            anything. A recipe written in displayed balances would come up short by exactly the
+            dividends already paid. Tessera stores recipes in raw units and applies the live
+            multiplier when it prices a share, so a share redeems for the same units before and after
+            a dividend, and is worth more after.
+          </p>
+        </div>
+        <div className="mt-10">
+          <Dividends />
+        </div>
       </section>
 
       {/* ------------------------------------------------------- two clocks */}
@@ -146,8 +191,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* -------------------------------------------------------- baskets */}
+      <MosaicBand />
+
+      {/* --------------------------------------------------------- revenue */}
+      <section className="reveal py-20">
+        <Revenue />
+      </section>
+
+      {/* ------------------------------------------------------------ keys */}
       <section className="reveal border-t border-rule py-20">
+        <Keys />
+      </section>
+
+      <MosaicBand />
+
+      {/* -------------------------------------------------------- baskets */}
+      <section className="reveal py-20">
         <FeaturedBaskets />
       </section>
     </div>
