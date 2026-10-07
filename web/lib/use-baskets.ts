@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { PublicKey } from "@solana/web3.js";
 import { useConnection } from "@solana/wallet-adapter-react";
-import { fetchBaskets, fetchBasket, type Basket } from "./tessera";
+import {
+  basketFromJson,
+  fetchBaskets,
+  fetchBasket,
+  type Basket,
+  type BasketJson,
+} from "./tessera";
 import { WRITE_CLUSTER, WRITE_RPC } from "./config";
 
 /**
@@ -37,7 +43,13 @@ export function useBaskets() {
 
   const load = useCallback(async () => {
     try {
-      setBaskets(await fetchBaskets(connection));
+      // The shared, cached list first; straight from the chain if that fails.
+      const res = await fetch("/api/baskets").catch(() => null);
+      setBaskets(
+        res?.ok
+          ? ((await res.json()) as BasketJson[]).map(basketFromJson)
+          : await fetchBaskets(connection),
+      );
       setError(null);
     } catch (err) {
       setError(explainReadFailure(err));

@@ -47,6 +47,7 @@ import {
   type ComponentArg,
 } from "./tessera";
 import { SHARE_DECIMALS } from "./config";
+import { confirmSignature } from "./confirm";
 
 export { PROGRAM_ID };
 
@@ -172,7 +173,7 @@ export async function sendSteps(
     const signature = await send(step.transaction, connection, {
       signers: step.signers,
     });
-    await connection.confirmTransaction(signature, "confirmed");
+    await confirmSignature(connection, signature);
     signatures.push(signature);
   }
   onProgress?.(steps.length, steps.length, "done");

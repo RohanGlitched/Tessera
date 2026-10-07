@@ -36,6 +36,9 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
+      playwright-core:
+        specifier: 1.63.0
+        version: 1.63.0
       ts-mocha:
         specifier: ^10.1.0
         version: 10.1.0(mocha@10.8.2)
@@ -584,6 +587,11 @@ packages:
   picomatch@2.3.2:
     resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
     engines: {node: '>=8.6'}
+
+  playwright-core@1.63.0:
+    resolution: {integrity: sha512-rYCsBF/M5HjUch52bbtVONEFjv6Xu8sm8h72dNlR5bzIE1fvC/bxgspzkjSfU+MweEMmPM8KJebG6nnyxo5mCg==}
+    engines: {node: '>=20'}
+    hasBin: true
 
   randombytes@2.1.0:
     resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}
@@ -1361,6 +1369,8 @@ snapshots:
   pathval@1.1.1: {}
 
   picomatch@2.3.2: {}
+
+  playwright-core@1.63.0: {}
 
   randombytes@2.1.0:
     dependencies:

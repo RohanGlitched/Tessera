@@ -29,6 +29,12 @@ web/next-env.d.ts
 # single repository. Nothing depends on it.
 .web-git-scaffold
 
+# The keypair scripts/demo-video.mjs signs the recorded demo with, and what it
+# records. Both are local artefacts: the key holds a little devnet SOL, and the
+# video is uploaded, not committed.
+.demo-key.json
+demo/
+
 # Local mirror addresses, rewritten by scripts/setup-mirror.mjs per cluster.
 .mirror-state.json
 .mirror-state-prestocks.json

@@ -482,3 +482,28 @@ export const sharesToRaw = (shares: number): bigint =>
 export const rawToShares = (raw: bigint): number => Number(raw) / ONE_SHARE;
 
 export { SHARE_DECIMALS, ONE_SHARE };
+
+/** A basket as JSON, with its big integers as strings. */
+export type BasketJson = Omit<Basket, "components" | "mintCount" | "redeemCount"> & {
+  components: (Omit<BasketComponent, "unitsPerShare"> & { unitsPerShare: string })[];
+  mintCount: string;
+  redeemCount: string;
+};
+
+export function basketToJson(b: Basket): BasketJson {
+  return {
+    ...b,
+    components: b.components.map((c) => ({ ...c, unitsPerShare: c.unitsPerShare.toString() })),
+    mintCount: b.mintCount.toString(),
+    redeemCount: b.redeemCount.toString(),
+  };
+}
+
+export function basketFromJson(b: BasketJson): Basket {
+  return {
+    ...b,
+    components: b.components.map((c) => ({ ...c, unitsPerShare: BigInt(c.unitsPerShare) })),
+    mintCount: BigInt(b.mintCount),
+    redeemCount: BigInt(b.redeemCount),
+  };
+}

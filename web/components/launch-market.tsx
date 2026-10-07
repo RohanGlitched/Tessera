@@ -16,6 +16,7 @@ import { explorerAddress, explorerTx } from "@/lib/config";
 import { count, money, percent, quantity } from "@/lib/format";
 import { useMeasure } from "@/lib/use-measure";
 import { ConnectButton } from "./connect-button";
+import { confirmSignature } from "@/lib/confirm";
 
 const AMOUNTS = [0.01, 0.05, 0.1];
 const SELL_SHARES = [25, 50, 100];
@@ -207,7 +208,7 @@ function OpenLaunch({
       const { buildLaunch } = await import("@/lib/launch");
       const transaction = await buildLaunch({ connection, creator: publicKey, basket, navSol });
       const sig = await sendTransaction(transaction, connection);
-      await connection.confirmTransaction(sig, "confirmed");
+      await confirmSignature(connection, sig);
       await onOpened();
     } catch (err) {
       setError(explain(err, "The launch could not be opened."));
@@ -360,7 +361,7 @@ export function LaunchCard({
         graduated: state.migrated,
       });
       const sig = await sendTransaction(transaction, connection);
-      await connection.confirmTransaction(sig, "confirmed");
+      await confirmSignature(connection, sig);
       setDone({ what: side === "buy" ? "Bought." : "Sold.", signature: sig });
       await Promise.all([onTraded(), loadHeld()]);
     } catch (err) {
@@ -391,7 +392,7 @@ export function LaunchCard({
       const sig = await sendTransaction(transaction, connection, {
         signers: [firstPositionNftKeypair, secondPositionNftKeypair],
       });
-      await connection.confirmTransaction(sig, "confirmed");
+      await confirmSignature(connection, sig);
       setDone({ what: "Graduated into Meteora DAMM v2.", signature: sig });
       await onTraded();
     } catch (err) {
@@ -410,7 +411,7 @@ export function LaunchCard({
       const { buildPoolFeeClaim } = await import("@/lib/trade");
       const transaction = await buildPoolFeeClaim({ connection, owner: publicKey, info });
       const sig = await sendTransaction(transaction, connection);
-      await connection.confirmTransaction(sig, "confirmed");
+      await confirmSignature(connection, sig);
       setDone({ what: `Claimed ${quantity(position.feeSol, 6)} SOL of pool fees.`, signature: sig });
       await loadPosition();
     } catch (err) {
@@ -439,7 +440,7 @@ export function LaunchCard({
         maxQuoteAmount: new BN("18446744073709551615"),
       });
       const sig = await sendTransaction(transaction, connection);
-      await connection.confirmTransaction(sig, "confirmed");
+      await confirmSignature(connection, sig);
       setDone({ what: `Claimed ${quantity(state.creatorFees, 6)} SOL.`, signature: sig });
       await onTraded();
     } catch (err) {
