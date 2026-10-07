@@ -40,14 +40,24 @@ export function useLedger(basket?: string) {
       .catch(
         (err) =>
           !controller.signal.aborted &&
-          setState({ key, ledger: null, error: err instanceof Error ? err.message : "read failed" }),
+          // Keep whatever was decoded before the read failed; the rows are real.
+          setState((s) => ({
+            key,
+            ledger: s.key === key ? s.ledger : null,
+            error: err instanceof Error ? err.message : "read failed",
+          })),
       );
     return () => controller.abort();
   }, [connection, basket, key]);
 
   const ledger = state.key === key ? state.ledger : null;
   const error = state.key === key ? state.error : null;
-  return { ledger, error, loading: !ledger && !error, decoding: ledger != null && ledger.done < ledger.total };
+  return {
+    ledger,
+    error,
+    loading: !ledger && !error,
+    decoding: ledger != null && !error && ledger.done < ledger.total,
+  };
 }
 
 const KIND: Record<LedgerEntry["kind"], { label: string; color: string }> = {
@@ -193,7 +203,10 @@ export function LedgerPage() {
       {loading && <p className="mt-12 text-sm text-ivory-faint">Reading the program&rsquo;s transactions…</p>}
       {error && (
         <p className="mt-12 border-l-2 border-loss pl-3 text-sm leading-relaxed text-loss">
-          Could not read the ledger. {error}
+          {ledger && ledger.done < ledger.total
+            ? `The public RPC stopped answering after ${count(ledger.done)} of ${count(ledger.total)} transactions. Reload in a minute to pick up the rest; what is below is already decoded. `
+            : "Could not read the ledger. "}
+          {error}
         </p>
       )}
 
@@ -229,8 +242,10 @@ export function LedgerPage() {
             <code className="text-ivory-dim">SharesRedeemed</code> event, decoded from
             the <code className="text-ivory-dim">Program data</code> lines of the
             transaction log, in your browser, against the public RPC. The decoder is{" "}
-            <code className="text-ivory-dim">web/lib/ledger.ts</code>, and what it has
-            decoded stays in this browser so the next visit only reads what is new.
+            <code className="text-ivory-dim">web/lib/ledger.ts</code>. The repository
+            carries what was decoded at the last release, and what this browser decodes
+            on top stays here, so a visit only reads the transactions that are new. Every
+            row links to its transaction, so neither is the source of truth; the chain is.
           </p>
         </>
       )}

@@ -10,15 +10,20 @@
  * It runs in the browser on purpose. A public RPC endpoint rations
  * `getTransaction` per caller, and a visitor's own connection has that budget
  * to itself, where a server shared by every visitor does not. Decoded events
- * never change, so each one is kept in local storage and a return visit only
- * fetches what landed since.
+ * never change, so each one is kept in local storage, and the repository
+ * carries a snapshot of everything decoded at the last release
+ * (public/ledger.snapshot.json, written by scripts/snapshot-ledger.mjs), so a
+ * first visit starts from there and only reads what landed since. Every row links
+ * to its transaction, so the snapshot is a cache, never the source of truth.
  *
  * The event layouts are copied from target/idl/tessera.json, which the program
  * itself emits; if the program changes, that file changes and so must this one.
  */
 
 import { Connection, PublicKey } from "@solana/web3.js";
-import { PROGRAM_ID } from "./tessera";
+import { TESSERA_PROGRAM_ID } from "./config";
+
+const PROGRAM_ID = new PublicKey(TESSERA_PROGRAM_ID);
 
 export type LedgerEntry = {
   signature: string;
@@ -59,8 +64,10 @@ const STORE = "tessera:ledger:v1";
 
 class Reader {
   private offset = 8;
+  private readonly data: Uint8Array;
   private readonly view: DataView;
-  constructor(private readonly data: Uint8Array) {
+  constructor(data: Uint8Array) {
+    this.data = data;
     this.view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   }
   u8() {
@@ -135,18 +142,43 @@ export function decodeEvent(
 
 type Known = Record<string, LedgerEntry[]>;
 
-function loadKnown(): Known {
+let SNAPSHOT: Known = {};
+let snapshotLoaded: Promise<void> | null = null;
+
+/** The committed snapshot, fetched once per page load; nothing if it is missing. */
+function loadSnapshot(): Promise<void> {
+  if (!snapshotLoaded) {
+    snapshotLoaded =
+      typeof window === "undefined"
+        ? Promise.resolve()
+        : fetch("/ledger.snapshot.json")
+            .then((res) => (res.ok ? res.json() : null))
+            .then((json: { known?: Known } | null) => {
+              SNAPSHOT = json?.known ?? {};
+            })
+            .catch(() => undefined);
+  }
+  return snapshotLoaded;
+}
+
+function loadKnown(seed?: Known): Known {
+  let stored: Known = {};
   try {
     const raw = typeof localStorage !== "undefined" ? localStorage.getItem(STORE) : null;
-    return raw ? (JSON.parse(raw) as Known) : {};
+    stored = raw ? (JSON.parse(raw) as Known) : {};
   } catch {
-    return {};
+    stored = {};
   }
+  return { ...SNAPSHOT, ...stored, ...(seed ?? {}) };
 }
 
 function saveKnown(known: Known) {
   try {
-    localStorage.setItem(STORE, JSON.stringify(known));
+    if (typeof localStorage === "undefined") return;
+    // Only what the snapshot does not already carry, to keep storage small.
+    const fresh: Known = {};
+    for (const [sig, entries] of Object.entries(known)) if (!SNAPSHOT[sig]) fresh[sig] = entries;
+    localStorage.setItem(STORE, JSON.stringify(fresh));
   } catch {
     // Storage full or unavailable: the next visit decodes again, nothing is lost.
   }
@@ -180,8 +212,11 @@ async function fetchEvents(
       return entries;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      if (attempt < 6 && /429|Too many requests/i.test(message)) {
-        await sleep(500 * 2 ** attempt);
+      // The public endpoint rations this call per address, and a visitor who
+      // has just loaded a basket page has spent some of that ration already.
+      // Wait it out, up to eight seconds a try, rather than give up on a row.
+      if (attempt < 12 && /429|Too many requests/i.test(message)) {
+        await sleep(Math.min(8000, 500 * 2 ** attempt));
         continue;
       }
       throw err;
@@ -203,13 +238,18 @@ export async function readLedger(
     limit?: number;
     onProgress?: (ledger: Ledger) => void;
     signal?: AbortSignal;
+    /** Already-decoded transactions to start from, for the snapshot script. */
+    known?: Known;
   } = {},
 ): Promise<Ledger> {
   const limit = options.limit ?? 300;
   const address = options.basket ? new PublicKey(options.basket) : PROGRAM_ID;
-  const signatures = await connection.getSignaturesForAddress(address, { limit }, "confirmed");
+  const [signatures] = await Promise.all([
+    connection.getSignaturesForAddress(address, { limit }, "confirmed"),
+    loadSnapshot(),
+  ]);
   const ok = signatures.filter((s) => s.err == null);
-  const known = loadKnown();
+  const known = loadKnown(options.known);
 
   const snapshot = (done: number): Ledger => ({
     entries: ok.flatMap((s) => known[s.signature] ?? []),
@@ -222,16 +262,22 @@ export async function readLedger(
   let done = ok.length - queue.length;
   options.onProgress?.(snapshot(done));
 
-  // Newest first, three at a time, so the top of a list fills in first and a
-  // public endpoint is never burst.
+  // Newest first, two at a time with a short gap, so the top of a list fills
+  // in first and a public endpoint is never burst. What has been decoded is
+  // saved as it arrives, so even an interrupted read is not repeated.
   const lane = async () => {
     for (let info = queue.shift(); info && !options.signal?.aborted; info = queue.shift()) {
       known[info.signature] = await fetchEvents(connection, info);
       done++;
       options.onProgress?.(snapshot(done));
+      if (done % 5 === 0) saveKnown(known);
+      await sleep(150);
     }
   };
-  await Promise.all([lane(), lane(), lane()]);
-  saveKnown(known);
+  try {
+    await Promise.all([lane(), lane()]);
+  } finally {
+    saveKnown(known);
+  }
   return snapshot(done);
 }

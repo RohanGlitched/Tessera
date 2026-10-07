@@ -264,7 +264,10 @@ share redeemed, across the program's whole life, with the wallet, the size and
 the raw units that moved through the vault. It is decoded in the browser from
 the `Program data` lines of each transaction's log, using the event layouts the
 program itself emits, so there is no indexer and no database to trust. Each
-basket page shows its own slice.
+basket page shows its own slice. The repository carries a snapshot of what
+was decoded at the last release (`scripts/snapshot-ledger.mjs`), so a first
+visit starts from it and only reads the transactions that landed since; every
+row links to its transaction, so the snapshot is a cache, never the source.
 
 **Check it without the page.** Under the backing table on every basket is a
 disclosure with the exact RPC calls that reproduce it: `getTokenSupply` on the
@@ -527,6 +530,7 @@ web/                                 the Next.js app
 web/lib/track.ts                     the track record: a recipe's value on every past day, from the listed shares' closes
 web/lib/history.ts                   a year of daily closes per ticker, read live with history.snapshot.json as the fallback
 web/lib/ledger.ts                    the program's events, decoded from transaction logs in the browser
+scripts/snapshot-ledger.mjs          rewrites web/public/ledger.snapshot.json so a first visit to /ledger starts decoded
 web/lib/prestocks.ts                 the 8 PreStocks pre-IPO mints
 web/lib/mirror.generated.ts          mainnet mint → devnet mirror mint, per ticker
 web/lib/dbc.ts                       where each basket's launch lives, read straight from the accounts
