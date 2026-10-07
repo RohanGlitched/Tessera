@@ -731,6 +731,72 @@ describe("tessera", () => {
     );
   });
 
+  it("stays backed through forty random creations and redemptions", async () => {
+    // A property rather than an example: whatever sizes people pick, in
+    // whatever order, no vault ever holds less than the outstanding shares
+    // claim. Sizes go down to a single raw share unit, where rounding bites
+    // hardest, and the generator is seeded so a failure can be replayed.
+    let seed = 0x5eed;
+    const random = () => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed / 2 ** 32;
+    };
+    const backed = async (label: string) => {
+      const supply = (
+        await getMint(provider.connection, shareMint, undefined, TOKEN_2022_PROGRAM_ID)
+      ).supply;
+      for (let i = 0; i < components.length; i++) {
+        const held = await rawBalance(vaultFor(basket, components[i]));
+        const owed =
+          (BigInt(unitsPerShare[i].toString()) * supply) / BigInt(ONE_SHARE);
+        assert.isTrue(
+          held >= owed,
+          `${label}: component ${i} holds ${held}, shares claim ${owed}`,
+        );
+      }
+    };
+
+    for (let round = 0; round < 40; round++) {
+      const held = await rawBalance(holderShareAta);
+      if (held > 0n && random() < 0.45) {
+        // Redeem anything from one raw share unit to everything held.
+        const shares = 1n + BigInt(Math.floor(random() * Number(held - 1n)));
+        await program.methods
+          .redeemShares(new anchor.BN(shares.toString()))
+          .accountsPartial({
+            basket,
+            shareMint,
+            owner: holder.publicKey,
+            ownerShareAccount: holderShareAta,
+            shareTokenProgram: TOKEN_2022_PROGRAM_ID,
+            componentTokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .remainingAccounts(redeemRemaining())
+          .signers([holder])
+          .rpc();
+        await backed(`round ${round}, redeemed ${shares}`);
+      } else {
+        // Create between one raw unit and three whole shares, skewed small.
+        const shares = 1n + BigInt(Math.floor(random() ** 3 * 3 * ONE_SHARE));
+        await program.methods
+          .mintShares(new anchor.BN(shares.toString()))
+          .accountsPartial({
+            basket,
+            shareMint,
+            depositor: holder.publicKey,
+            depositorShareAccount: holderShareAta,
+            creatorShareAccount: creatorShareAta,
+            shareTokenProgram: TOKEN_2022_PROGRAM_ID,
+            componentTokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .remainingAccounts(mintRemaining())
+          .signers([holder])
+          .rpc();
+        await backed(`round ${round}, created ${shares}`);
+      }
+    }
+  });
+
   it("still fully backs every share after all that", async () => {
     const mintInfo = await getMint(
       provider.connection,

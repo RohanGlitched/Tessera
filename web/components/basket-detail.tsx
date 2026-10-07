@@ -11,7 +11,10 @@ import { BasketMosaic } from "./basket-mosaic";
 import { Figure } from "./figure";
 import { FaucetButton } from "./faucet-button";
 import { FillCostPanel } from "./fill-cost";
-import { TOKEN_2022_PROGRAM_ID, ONE_SHARE } from "@/lib/tessera";
+import { TrackRecord } from "./track-record";
+import { BasketHistory } from "./ledger";
+import { PublicKey } from "@solana/web3.js";
+import { TOKEN_2022_PROGRAM_ID, ONE_SHARE, tokenAccount } from "@/lib/tessera";
 import {
   buildMintShares,
   buildRedeemShares,
@@ -22,7 +25,7 @@ import { symbolForWriteMint } from "@/lib/mirror";
 import { PRESTOCK_SYMBOLS, BY_SYMBOL_PRESTOCKS } from "@/lib/prestocks";
 import { BasketLaunch } from "./launch-market";
 import { ConnectButton } from "./connect-button";
-import { explorerAddress, explorerTx } from "@/lib/config";
+import { explorerAddress, explorerTx, WRITE_RPC } from "@/lib/config";
 import { slotColor } from "@/lib/palette";
 import {
   money,
@@ -127,6 +130,13 @@ function Loaded({
   }));
 
   const heldRaw = balances.raw.get(basket.shareMint) ?? 0n;
+
+  // What each holding is worth inside one share today, which is where every
+  // line of the track record ends.
+  const trackComponents = useMemo(
+    () => valuation.components.map((c) => ({ base: c.base, valueNow: c.value ?? 0 })),
+    [valuation],
+  );
 
   return (
     <div>
@@ -268,6 +278,10 @@ function Loaded({
       </div>
       </div>
 
+      {valuation.nav != null && (
+        <TrackRecord components={trackComponents} symbol={basket.symbol} createdAt={basket.createdAt} />
+      )}
+
       <BasketLaunch basket={basket} navUsd={valuation.nav} />
 
       {/* What it should hold, beside what it does hold. `min-w-0` on the tracks,
@@ -277,6 +291,8 @@ function Loaded({
         <Composition basket={basket} valuation={valuation} />
         <Backing basket={basket} onChain={onChain} />
       </div>
+
+      <BasketHistory basket={basket} />
 
       <FillCostPanel components={valuation.components} nav={valuation.nav} />
 
@@ -521,7 +537,97 @@ function Backing({
           </div>
         </>
       )}
+
+      <Proof basket={basket} />
     </section>
+  );
+}
+
+// ----------------------------------------------------------------------- proof
+
+const rpcCall = (method: string, address: string) =>
+  `curl -s ${WRITE_RPC} -X POST -H 'content-type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"${method}","params":["${address}"]}'`;
+
+/**
+ * The backing check, as two RPC calls anyone can run.
+ *
+ * The table above is this page's reading of the chain. This is how to take the
+ * page out of the loop: the share supply from the mint, each vault's balance
+ * from its token account, and the inequality that has to hold between them.
+ */
+function Proof({ basket }: { basket: Basket }) {
+  const [copied, setCopied] = useState<string | null>(null);
+  const basketKey = new PublicKey(basket.address);
+  const tokenProgram = new PublicKey(basket.tokenProgram);
+  const vaults = basket.components.map((c) => ({
+    label: (symbolForWriteMint(c.mint) ?? "?").replace(/x$/, ""),
+    address: tokenAccount(new PublicKey(c.mint), basketKey, tokenProgram).toBase58(),
+    units: c.unitsPerShare.toString(),
+  }));
+
+  const copy = (key: string, text: string) => {
+    void navigator.clipboard?.writeText(text).then(() => {
+      setCopied(key);
+      setTimeout(() => setCopied((c) => (c === key ? null : c)), 1500);
+    });
+  };
+
+  return (
+    <details className="mt-7 border border-rule">
+      <summary className="cursor-pointer px-4 py-3 text-sm text-ivory-dim marker:text-gold hover:text-ivory">
+        Check it without this page
+      </summary>
+      <div className="space-y-4 border-t border-rule px-4 py-4 text-sm leading-relaxed text-ivory-dim">
+        <p>
+          Two kinds of read, both against the public RPC, no key. First, how many
+          shares exist:
+        </p>
+        <Command id="supply" text={rpcCall("getTokenSupply", basket.shareMint)} copied={copied} onCopy={copy} />
+        <p>Then what each vault holds:</p>
+        {vaults.map((v) => (
+          <div key={v.address}>
+            <p className="tnum mb-1.5 text-xs text-ivory-faint">
+              {v.label} · vault {shortAddress(v.address, 6, 6)} · recipe {v.units} raw units per share
+            </p>
+            <Command id={v.address} text={rpcCall("getTokenAccountBalance", v.address)} copied={copied} onCopy={copy} />
+          </div>
+        ))}
+        <p>
+          For every vault, <span className="tnum text-ivory">amount</span> must be at
+          least <span className="tnum text-ivory">units per share × supply ÷ 1,000,000</span>,
+          both in raw units. If that holds, every share is backed. The program cannot
+          make it false: deposits round up, redemptions round down, and no instruction
+          moves anything out of a vault except a redemption.
+        </p>
+      </div>
+    </details>
+  );
+}
+
+function Command({
+  id,
+  text,
+  copied,
+  onCopy,
+}: {
+  id: string;
+  text: string;
+  copied: string | null;
+  onCopy: (id: string, text: string) => void;
+}) {
+  return (
+    <div className="relative">
+      <pre className="overflow-x-auto border border-rule bg-ground-deep px-3 py-2.5 text-[11px] leading-relaxed text-ivory-dim">
+        <code>{text}</code>
+      </pre>
+      <button
+        type="button"
+        onClick={() => onCopy(id, text)}
+        className="absolute right-2 top-2 border border-rule bg-ground px-2 py-0.5 text-[11px] text-ivory-faint transition-colors hover:border-gold hover:text-ivory"
+      >
+        {copied === id ? "Copied" : "Copy"}
+      </button>
+    </div>
   );
 }
 

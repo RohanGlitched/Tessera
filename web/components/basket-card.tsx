@@ -8,6 +8,7 @@ import { PRESTOCK_SYMBOLS } from "@/lib/prestocks";
 import { useMarket } from "./market-provider";
 import { BasketMosaic } from "./basket-mosaic";
 import { money, signedPercent, percent, count, shortAddress } from "@/lib/format";
+import { CardTrack } from "./track-record";
 
 export function BasketCard({ basket, launched = false }: { basket: Basket; launched?: boolean }) {
   const { snapshot } = useMarket();
@@ -25,6 +26,11 @@ export function BasketCard({ basket, launched = false }: { basket: Basket; launc
 
   const hasPreStocks = valuation.components.some((c) =>
     PRESTOCK_SYMBOLS.has(c.symbol),
+  );
+
+  const trackComponents = useMemo(
+    () => valuation.components.map((c) => ({ base: c.base, valueNow: c.value ?? 0 })),
+    [valuation],
   );
 
   return (
@@ -75,9 +81,9 @@ export function BasketCard({ basket, launched = false }: { basket: Basket; launc
 
       <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-rule px-5 py-4 text-xs">
         <div>
-          <dt className="text-ivory-faint">Creator fee</dt>
+          <dt className="text-ivory-faint">Past year</dt>
           <dd className="tnum mt-0.5 text-ivory-dim">
-            {percent(basket.creatorFeeBps / 100)}
+            {valuation.nav != null ? <CardTrack components={trackComponents} /> : "—"}
           </dd>
         </div>
         <div>

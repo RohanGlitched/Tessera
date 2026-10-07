@@ -8,6 +8,7 @@ import { useMarket } from "./market-provider";
 import { MarketMosaic } from "./market-mosaic";
 import { BasketMosaic, type BasketTile } from "./basket-mosaic";
 import { Figure } from "./figure";
+import { TrackFigure } from "./track-record";
 import { slotColor } from "@/lib/palette";
 import { money, percent, moneyCompact, quantity, signedPercent } from "@/lib/format";
 import { equalWeights, proportionalWeights, setWeight, WEIGHT_TOTAL } from "@/lib/weights";
@@ -231,12 +232,14 @@ export function Composer() {
     // Actual NAV after rounding to whole raw units, which is what a share is worth.
     let nav = 0;
     let accrued = 0;
+    const values: number[] = [];
     if (units) {
       units.forEach((u, i) => {
         const r = rows[i];
         const perRawUnit =
           (r.quote!.price * r.quote!.multiplier) / 10 ** r.stock.decimals;
         const value = Number(u.unitsPerShare) * perRawUnit;
+        values.push(value);
         nav += value;
         if (r.quote!.paysDividend) accrued += value * (1 - 1 / r.quote!.multiplier);
       });
@@ -246,6 +249,8 @@ export function Composer() {
       rows,
       units,
       nav: units ? nav : null,
+      /** Dollar value of each component inside one share, in row order. */
+      values,
       /** Share of the basket's value that is dividends already collected. */
       accruedShare: units && nav > 0 ? (accrued / nav) * 100 : null,
       change24h: rows.length
@@ -267,6 +272,16 @@ export function Composer() {
         : null,
     };
   }, [picks, weights, quoteBySymbol, sharePrice]);
+
+  // The track record redraws as the weights move, so it reads the recipe's own
+  // per-component values rather than anything cached.
+  const trackComponents = useMemo(
+    () =>
+      recipe.units
+        ? recipe.rows.map((r, i) => ({ base: r.stock.base, valueNow: recipe.values[i] ?? 0 }))
+        : [],
+    [recipe],
+  );
 
   const tiles: BasketTile[] = recipe.rows.map((r) => ({
     key: r.pick.symbol,
@@ -699,6 +714,7 @@ export function Composer() {
                     : "—"
                 }
               />
+              <TrackFigure components={trackComponents} />
             </dl>
           )}
 

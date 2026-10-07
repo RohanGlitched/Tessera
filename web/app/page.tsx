@@ -120,6 +120,14 @@ export default function Home() {
           >
             How the program is built
           </Link>
+          {" "}· every creation and redemption it has ever settled is on{" "}
+          <Link
+            href="/ledger"
+            className="text-ivory-dim underline decoration-rule-bright underline-offset-4 hover:text-ivory"
+          >
+            the ledger
+          </Link>
+          .
         </p>
       </section>
 

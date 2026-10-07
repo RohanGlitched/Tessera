@@ -71,6 +71,10 @@ flowchart LR
 
 **A launch market.** The Meteora curve in front of a new basket, drawn from the pool config's own segments, with a buy and the creator's fee claim.
 
+<img src=".github/readme/ledger.png" alt="The ledger: every creation and redemption the program has settled, decoded from its own events" width="100%">
+
+**The ledger.** Every creation and redemption the program has ever settled, decoded in the browser from the events in its own transaction logs.
+
 ---
 
 ## Try it in two minutes
@@ -117,7 +121,9 @@ contain NVIDIA show up as one NVIDIA exposure.
 | Dividend multipliers and token supply | **Read from the mint accounts on mainnet, via Solami** |
 | The 28 tokenised equities you can compose | **Real xStocks by Backed Finance (20) and pre-IPO PreStocks (8)** |
 | Creating and redeeming shares | **Devnet**, against mirror mints (see below) |
-| The program's arithmetic | **10 integration tests, run in CI on every push** |
+| What a recipe would have done | **A year of daily closes of the listed shares**, read live with a committed snapshot as the fallback |
+| Every basket's history | **Decoded in your browser from the program's own events**, no indexer, no database |
+| The program's arithmetic | **11 integration tests, run in CI on every push**, one of them randomised |
 
 Every figure in the market mosaic, every premium against the listed share and
 every dividend-accrual number is read from mainnet when the page loads.
@@ -173,8 +179,10 @@ What the program can and cannot do, and who holds which key.
   upgrade authority, which is right for a devnet deployment that is still
   changing; a mainnet deployment would move it to a multisig and, later, burn
   it.
-- **Tests and CI.** 10 integration tests cover creation, minting, redeeming,
+- **Tests and CI.** 11 integration tests cover creation, minting, redeeming,
   rounding, the fee cut and the dividend multiplier, and run on every push.
+  One of them is a property test: forty random creations and redemptions,
+  down to a single raw share unit, with every vault checked after each.
 - **Not yet audited.** Tessera is on devnet and holds no real assets. It will
   not hold real tokenised equities before an audit.
 
@@ -230,6 +238,38 @@ and straight back out, and shows the round-trip cost with the venue for each leg
 On a live eight-component basket that is **0.17% for one share and 0.26% for a
 hundred**. The panel measures the route against itself rather than against a price
 feed, so the figure is exact. The arithmetic is in `web/lib/fill-cost.ts`.
+
+---
+
+## What a judge can check in a minute
+
+Three things the product shows that an index launchpad usually asks you to
+take on faith.
+
+**What the recipe would have done.** Every basket page and the composer carry
+a track record: the recipe's fixed quantities times each past day's price, so
+the line ends exactly at today's value on chain, drawn against SPY over one
+month to one year, with the deepest fall and the annualised volatility beside
+it. In the composer it redraws as you drag a weight. Dividends are counted the
+way the tokens pay them, by compounding into the holding, and the page says
+how much of the return they were. Holdings with no listed share (the pre-IPO
+PreStocks) are held flat and named, and a company listed after the range began
+pulls the start of the chart forward rather than being invented. The arithmetic
+is `web/lib/track.ts`; the closes come from `/api/history`.
+
+<img src=".github/readme/track.png" alt="The Big Five's track record: one year against SPY, with the return, the gap to the index fund, the deepest fall and the volatility" width="100%">
+
+**The ledger.** `/ledger` is every basket created, every share created and every
+share redeemed, across the program's whole life, with the wallet, the size and
+the raw units that moved through the vault. It is decoded in the browser from
+the `Program data` lines of each transaction's log, using the event layouts the
+program itself emits, so there is no indexer and no database to trust. Each
+basket page shows its own slice.
+
+**Check it without the page.** Under the backing table on every basket is a
+disclosure with the exact RPC calls that reproduce it: `getTokenSupply` on the
+share mint and `getTokenAccountBalance` on each vault, as copyable `curl`
+commands, and the one inequality that has to hold between them.
 
 ---
 
@@ -358,14 +398,18 @@ control.
     ✔ rejects a vault that is not the basket's own token account
     ✔ is unmoved by a dividend accruing into a component's multiplier
     ✔ grosses up a deposit so a transfer-fee component still nets the recipe amount
+    ✔ stays backed through forty random creations and redemptions
     ✔ still fully backs every share after all that
 
-  10 passing
+  11 passing
 ```
 
 The eighth test raises a component's dividend multiplier mid-test and checks
 that mint and redeem amounts are unchanged. The ninth is the transfer-fee case
-for PreStocks.
+for PreStocks. The tenth is a property rather than an example: a seeded
+generator picks forty creations and redemptions of random size, down to one
+raw share unit where rounding bites hardest, and after each one every vault is
+checked against what the outstanding shares can claim.
 
 ---
 
@@ -382,9 +426,11 @@ Backpack and others).
 | `/explore` | Every basket, with its backing proof and its premium to its own components |
 | `/basket/[address]` | One basket: recipe, vault contents, backing check, create and redeem, its Meteora launch market, and the cost of buying in with dollars |
 | `/portfolio` | What you hold, what it is worth, and the companies underneath |
+| `/ledger` | Every basket created, every share created and every share redeemed, decoded in the browser from the program's events |
 | `/method` | How it works and the reasoning behind each design choice |
 | `/api/launches` | JSON: every basket's Meteora launch market, with SOL raised, market cap, fees and the curve's own segments, read from the pool accounts |
 | `/api/market` | JSON: the 28 tokenised equities with live prices and the dividend multipliers read from their mints |
+| `/api/history` | JSON: a year of daily closes for every listed company in the universe, plus the benchmark, which every track record is computed from |
 
 Two API routes:
 - `/api/market` batches the mainnet reads (Jupiter prices, plus supply and
@@ -439,7 +485,7 @@ CI runs.
 pnpm install                        # at the repository root
 solana-keygen new --no-bip39-passphrase   # skip if you already have ~/.config/solana/id.json
 anchor keys sync                    # use a program ID your machine holds the key for
-anchor test                         # starts a local validator, deploys, runs all 10 tests
+anchor test                         # starts a local validator, deploys, runs all 11 tests
 ```
 
 `anchor keys sync` rewrites the program ID in `lib.rs` and `Anchor.toml` to your
@@ -476,8 +522,11 @@ To use a local validator instead, run `solana-test-validator --reset`, then
 
 ```
 programs/tessera/src/lib.rs          the program: create, mint, redeem
-tests/tessera.ts                     10 integration tests, including the dividend and fee cases
+tests/tessera.ts                     11 integration tests, including the dividend, fee and random-order cases
 web/                                 the Next.js app
+web/lib/track.ts                     the track record: a recipe's value on every past day, from the listed shares' closes
+web/lib/history.ts                   a year of daily closes per ticker, read live with history.snapshot.json as the fallback
+web/lib/ledger.ts                    the program's events, decoded from transaction logs in the browser
 web/lib/prestocks.ts                 the 8 PreStocks pre-IPO mints
 web/lib/mirror.generated.ts          mainnet mint → devnet mirror mint, per ticker
 web/lib/dbc.ts                       where each basket's launch lives, read straight from the accounts
@@ -493,6 +542,7 @@ scripts/dbc-launch.mjs               opened the first launch (FRNTRA) before lau
 scripts/split-faucet-key.mjs         moves mint authority off the deploy wallet
 scripts/lib/rpc.mjs                  safe retries against a rate-limited RPC
 scripts/gen-universe.mjs             regenerates web/lib/universe.ts from mainnet
+scripts/snapshot-history.mjs         rewrites web/lib/history.snapshot.json, the fallback for the track record
 scripts/build-diverging.mjs          generates and checks the 24-hour-move colour scale
 ```
 

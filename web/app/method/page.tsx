@@ -60,6 +60,18 @@ const GUARANTEES = [
     title: "Buying with dollars, measured",
     body: "Every basket page quotes the round trip through Jupiter for each component. A typical basket lands under a quarter of a percent.",
   },
+  {
+    title: "A track record, not a promise",
+    body: "Every basket shows what its recipe would have done over the past year against SPY, from the listed shares' own closes, with the deepest fall beside the return.",
+  },
+  {
+    title: "Everything is in the log",
+    body: "The program emits an event for every creation and redemption. The ledger decodes them from the chain in your browser, so there is no database to trust.",
+  },
+  {
+    title: "Check it without us",
+    body: "Under every backing table are the two RPC calls that reproduce it: the share supply and each vault's balance. If the inequality holds, every share is backed.",
+  },
 ];
 
 function Stage({

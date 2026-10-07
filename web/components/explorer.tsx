@@ -8,6 +8,8 @@ import { valueBasket } from "@/lib/basket-view";
 import { BasketCard } from "./basket-card";
 import { useOpenLaunches } from "@/lib/use-launches";
 import { count, money } from "@/lib/format";
+import { useHistory } from "@/lib/use-history";
+import { trackRecord } from "@/lib/track";
 import { CardSkeletons } from "./skeletons";
 
 /**
@@ -18,10 +20,11 @@ import { CardSkeletons } from "./skeletons";
  * sort key, which the visitor picks.
  */
 
-type SortKey = "newest" | "value" | "activity" | "components";
+type SortKey = "newest" | "value" | "activity" | "components" | "year";
 
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "activity", label: "Most traded" },
+  { key: "year", label: "Best past year" },
   { key: "newest", label: "Newest" },
   { key: "value", label: "Most valuable share" },
   { key: "components", label: "Most holdings" },
@@ -31,6 +34,7 @@ export function Explorer() {
   const { baskets, error, loading } = useBaskets();
   const launched = useOpenLaunches(baskets);
   const { snapshot } = useMarket();
+  const { history } = useHistory();
   const [sort, setSort] = useState<SortKey>("activity");
   const [query, setQuery] = useState("");
 
@@ -52,9 +56,21 @@ export function Explorer() {
         snapshot,
       ).nav ?? 0;
 
+    const yearOf = (address: string) => {
+      const v = valueBasket(baskets.find((b) => b.address === address)!, snapshot);
+      const track = trackRecord(
+        v.components.map((c) => ({ base: c.base, valueNow: c.value ?? 0 })),
+        history,
+        "1y",
+      );
+      return track?.returnPct ?? -Infinity;
+    };
+
     switch (sort) {
       case "value":
         return filtered.sort((a, b) => navOf(b.address) - navOf(a.address));
+      case "year":
+        return filtered.sort((a, b) => yearOf(b.address) - yearOf(a.address));
       case "activity":
         return filtered.sort(
           (a, b) =>
@@ -68,7 +84,7 @@ export function Explorer() {
       default:
         return filtered.sort((a, b) => b.createdAt - a.createdAt);
     }
-  }, [baskets, snapshot, sort, query]);
+  }, [baskets, snapshot, history, sort, query]);
 
   const totalValue = useMemo(
     () =>
